@@ -136,6 +136,38 @@ public class PlantWarpOutSystem : SystemBase
 	}
 }
 
+public class PlantHarvestSystem : SystemBase
+{
+	private EntityCommandBufferSystem m_CommandBufferSystem;
+
+	protected override void OnCreate()
+	{
+		m_CommandBufferSystem = World.GetExistingSystem<EndSimulationEntityCommandBufferSystem>();
+	}
+
+	protected override void OnUpdate()
+	{
+		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+
+		Entities
+			.WithName("Plant_Harvest")
+			.WithAll<PathComplete>()
+			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_Harvest harvestIntent) =>
+			{
+				// update plant state
+				entityCommandBuffer.RemoveComponent<PlantStateGrown>(entityInQueryIndex, harvestIntent.PlantEntity);
+				entityCommandBuffer.AddComponent<PlantStateCarried>(entityInQueryIndex, harvestIntent.PlantEntity);
+
+				// update worker state
+				entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
+				entityCommandBuffer.RemoveComponent<WorkerIntent_Harvest>(entityInQueryIndex, entity);
+				entityCommandBuffer.AddComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
+
+			}).ScheduleParallel();
+
+		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
+	}
+}
 
 public class PlantSellSystem : SystemBase
 {

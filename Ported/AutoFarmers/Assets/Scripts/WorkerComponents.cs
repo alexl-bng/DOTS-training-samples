@@ -1,6 +1,10 @@
 ﻿using Unity.Entities;
 
-public struct WorkerIntent_Harvest : IComponentData { }
+public struct WorkerIntent_Harvest : IComponentData
+{
+	public Entity PlantEntity;
+}
+
 public struct WorkerIntent_Sell : IComponentData
 {
 	public Entity PlantEntity;
