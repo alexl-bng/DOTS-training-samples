@@ -27,8 +27,15 @@ public class DroneMovementSystem : SystemBase
                 {
                     // Drones make a direct bee line to their target
                     // TODO: account for smoothing
-                    if (math.abs(path.targetPosition.x - ltw.Position.x) > 0.01 ||
-                        math.abs(path.targetPosition.z - ltw.Position.z) > 0.01)
+                    if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.01 &&
+                        math.abs(path.targetPosition.z - ltw.Position.z) < 0.01)
+                    {
+                        if (!HasComponent<PathComplete>(entity))
+                        {
+                            ecb.AddComponent(entity, new PathComplete());    
+                        }
+                    }
+                    else
                     {
                         ecb.AddComponent(entity,  new Translation()
                         {

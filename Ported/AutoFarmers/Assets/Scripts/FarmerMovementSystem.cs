@@ -46,7 +46,10 @@ public class FarmerMovementSystem : SystemBase
                 if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.01 &&
                     math.abs(path.targetPosition.z - ltw.Position.z) < 0.01)
                 {
-                    ecb.AddComponent(entity, new PathComplete());
+                    if (!HasComponent<PathComplete>(entity))
+                    {
+                        ecb.AddComponent(entity, new PathComplete());
+                    }
                 }
                 else
                 {
