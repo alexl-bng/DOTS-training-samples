@@ -5,4 +5,6 @@ using Unity.Mathematics;
 public struct PlantConfig : IComponentData
 {
 	public float GrowthTime;
+	public float WarpTime;
+	public float MaxWarpHeight;
 }
