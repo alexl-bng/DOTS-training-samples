@@ -12,7 +12,6 @@ public struct PlantStateGrown : IComponentData
 
 public struct PlantStateCarried : IComponentData
 {
-	public Entity Owner;
 }
 
 public struct PlantStateWarpingOut : IComponentData
