@@ -19,8 +19,3 @@ public struct PlantStateWarpingOut : IComponentData
 {
 	public float WarpProgress;
 }
-
-public struct WorkerIntentSell : IComponentData
-{
-	public Entity PlantEntity;
-}
