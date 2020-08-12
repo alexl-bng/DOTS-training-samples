@@ -32,6 +32,7 @@ public class SpawnerSystem : SystemBase
 							Value = ltw.Position + spawnPos
 						});
 
+						ecb.AddComponent<RandomNumberGenerator>(spawnEntity);
 						ecb.SetComponent(spawnEntity, new RandomNumberGenerator
 						{
 							rng = new Random((uint)spawnEntity.Index)
