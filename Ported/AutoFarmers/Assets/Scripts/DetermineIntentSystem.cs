@@ -7,7 +7,7 @@ public class DetermineIntentSystem_Farmer : SystemBase
 	protected override void OnUpdate()
 	{
 		Entities
-			.WithAll<Farmer, AI_None>()			
+			.WithAll<Farmer, WorkerIntent_None>()			
 			.ForEach((
 				Farmer entity,
 				RandomNumberGenerator rng
