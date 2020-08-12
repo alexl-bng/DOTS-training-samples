@@ -34,7 +34,6 @@ public class PlantInitialize : SystemBase
 public class PlantGrowthSystem : SystemBase
 {
 	private EntityCommandBufferSystem m_CommandBufferSystem;
-	private float3 kPlantScale = new float3(0.125f, 1.0f, 0.125f);
 
 	protected override void OnCreate()
 	{
@@ -48,7 +47,7 @@ public class PlantGrowthSystem : SystemBase
 		float deltaTime = Time.DeltaTime;
 		float growthSpeed = 1.0f / math.max(0.001f, plantConfig.GrowthTime);
 		float growthDelta = deltaTime * growthSpeed;
-		float3 plantScale = kPlantScale;
+		float3 plantScale = plantConfig.PlantScale;
 
 		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
 
@@ -115,20 +114,20 @@ public class PlantWarpOutSystem : SystemBase
 
 		float deltaTime = Time.DeltaTime;
 		float warpSpeed = 1.0f / math.max(0.001f, plantConfig.WarpTime);
-		float heightDelta = warpSpeed * deltaTime;
-		float maxWarpHeight = plantConfig.MaxWarpHeight; 
+		float heightDelta = warpSpeed * deltaTime * plantConfig.MaxWarpHeight;
 
 		Entities
 			.WithName("Plant_Warp_Out")
 			.ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref PlantStateWarpingOut warpOut) =>
 			{
-				if (translation.Value.y > maxWarpHeight)
+				if (warpOut.WarpProgress < 1.0f)
 				{
-					entityCommandBuffer.DestroyEntity(entityInQueryIndex, entity);
+					translation.Value += new float3(0.0f, heightDelta, 0.0f);
+					warpOut.WarpProgress += warpSpeed * deltaTime;
 				}
 				else
 				{
-					translation.Value += new float3(0.0f, heightDelta, 0.0f);
+					entityCommandBuffer.DestroyEntity(entityInQueryIndex, entity);
 				}
 
 			}).ScheduleParallel();
