@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 1420970329}
   - component: {fileID: 1420970328}
   m_Layer: 0
-  m_Name: TestSpawner
+  m_Name: GridSpawner
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -149,18 +149,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 1420970327}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5eb56d0a8cf76243bf90a3201841d2d, type: 3}
+  m_Script: {fileID: 11500000, guid: bfe29f3f95c5d67429659b0e37746649, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
-  Count:
+  GridSectionDimensions:
+    x: 16
+    y: 16
+  GridSectionCount:
     x: 10
-    y: 3
-    z: 10
-  Spacing:
-    x: 2
-    y: 5
-    z: 2
+    y: 10
+  GridWorldScale:
+    x: 1
+    y: 1
+    z: 1
+  TilePrefab: {fileID: 7817550659131983143, guid: 1244d86937f710f40996550bb16217cf, type: 3}
 --- !u!4 &1420970329
 Transform:
   m_ObjectHideFlags: 0
