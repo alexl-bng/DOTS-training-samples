@@ -62,8 +62,8 @@ public class PlantGrowthSystem : SystemBase
 				}
 				else
 				{
-				// plant is fully grown
-				entityCommandBuffer.AddComponent(entityInQueryIndex, entity, new PlantStateGrown { });
+					// plant is fully grown
+					entityCommandBuffer.AddComponent(entityInQueryIndex, entity, new PlantStateGrown { });
 					entityCommandBuffer.RemoveComponent<PlantStateGrowing>(entityInQueryIndex, entity);
 				}
 
@@ -131,6 +131,49 @@ public class PlantWarpOutSystem : SystemBase
 				}
 
 			}).ScheduleParallel();
+
+		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
+	}
+}
+
+
+public class PlantSellSystem : SystemBase
+{
+	private EntityCommandBufferSystem m_CommandBufferSystem;
+
+	protected override void OnCreate()
+	{
+		m_CommandBufferSystem = World.GetExistingSystem<EndSimulationEntityCommandBufferSystem>();
+	}
+
+	protected override void OnUpdate()
+	{
+		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+		PlantConfig plantConfig = GetSingleton<PlantConfig>();
+		GameState gameState = GetSingleton<GameState>();
+		ResourceManager resourceManager = GetSingleton<ResourceManager>();
+
+		Entities
+			.WithName("Plant_Sell")
+			.WithAll<PathComplete>()
+			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_Sell sellIntent, ref Path path) =>
+			{
+				// update game state
+				gameState.LastStorePosition = path.targetPosition;
+				gameState.PlantSold = true;
+				resourceManager.FarmerCoins++;
+				resourceManager.DroneCoins++;
+
+				// update plant state
+				entityCommandBuffer.RemoveComponent<PlantStateCarried>(entityInQueryIndex, sellIntent.PlantEntity);
+				entityCommandBuffer.AddComponent<PlantStateWarpingOut>(entityInQueryIndex, sellIntent.PlantEntity);
+
+				// update worker state
+				entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
+				entityCommandBuffer.RemoveComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
+				entityCommandBuffer.AddComponent<WorkerIntent_None>(entityInQueryIndex, entity);
+
+			}).Run();
 
 		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
 	}
