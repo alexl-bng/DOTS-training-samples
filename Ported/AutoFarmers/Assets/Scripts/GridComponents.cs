@@ -37,6 +37,11 @@ public struct Grid : IComponentData
 		int tileIndex =  relativeX * SectionDimensions.y + relativeY;
 		return tileIndex;
 	}
+
+	public int2 GetTileDimensions()
+	{
+		return SectionDimensions * SectionCount;
+	}
 }
 
 public struct GridSection : IComponentData
