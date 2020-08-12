@@ -12,10 +12,8 @@ GameObject:
   - component: {fileID: 3939097814004160058}
   - component: {fileID: 4295254550329643622}
   - component: {fileID: -1965378474811926986}
-  - component: {fileID: -7467376683746285152}
-  - component: {fileID: 6663170332750103483}
   m_Layer: 0
-  m_Name: Farmer
+  m_Name: Drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 6701329909793408903}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.2, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -62,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: c42b0811053ac9c43b86f1d60fbd716e, type: 2}
+  - {fileID: 2100000, guid: 01ae3af00bc8a2b4c8fbb1e5d895e56d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -98,27 +96,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rng:
     state: 0
---- !u!114 &-7467376683746285152
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6701329909793408903}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7acd58d4a662dc7418cece08573aa04c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &6663170332750103483
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6701329909793408903}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a31a953a8dbbce4982bc5bdcb28fbd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
