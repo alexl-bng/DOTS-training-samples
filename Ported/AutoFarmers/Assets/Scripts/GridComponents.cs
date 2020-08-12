@@ -22,6 +22,14 @@ public struct Grid : IComponentData
 		int sectionZ = gridLocation.y / SectionDimensions.y;
 		return sectionX * SectionCount.y + sectionZ;
 	}
+
+	public int GetTileIndex(int2 pos)
+	{
+		int relativeX = pos.x % SectionDimensions.x;
+		int relativeY = pos.y % SectionDimensions.y;
+		int tileIndex =  relativeX * SectionDimensions.y + relativeY;
+		return tileIndex;
+	}
 }
 
 public struct GridSection : IComponentData
