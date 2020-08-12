@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [GenerateAuthoringComponent]
-public class Path : IComponentData
+public struct Path : IComponentData
 {
     public float3 sourcePosition;
     public float3 targetPosition;

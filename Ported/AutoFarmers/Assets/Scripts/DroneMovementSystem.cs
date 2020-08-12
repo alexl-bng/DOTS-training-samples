@@ -23,7 +23,7 @@ public class DroneMovementSystem : SystemBase
             .WithName("drone_movement")
             .WithAll<Drone, Path>()
             .WithoutBurst()
-            .ForEach((Entity entity, Path path, in LocalToWorld ltw) =>
+            .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
                 {
                     // Drones make a direct bee line to their target
                     // TODO: account for smoothing
