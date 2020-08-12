@@ -15,6 +15,13 @@ public struct Grid : IComponentData
 	public int2 SectionDimensions;
 	public int2 SectionCount;
 	public float3 WorldScale;
+
+	public int2 GetWorldDimensions()
+	{
+		return new int2(SectionCount.x * SectionDimensions.x, SectionCount.y * SectionDimensions.y);
+	}
+
+	
 	
 	public int GetSectionId(int2 gridLocation)
 	{
