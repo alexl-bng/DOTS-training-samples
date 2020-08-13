@@ -53,6 +53,12 @@ public class WorkerSpawnSystem : SystemBase
 					Value = gameState.LastStorePosition
 				});
 
+				entityCommandBuffer.AddComponent<RandomNumberGenerator>(newFarmerEntity);
+				entityCommandBuffer.SetComponent(newFarmerEntity, new RandomNumberGenerator
+				{
+					rng = new Random((uint)newFarmerEntity.Index * 100)
+				});
+
 				resourceManager.FarmerCoins -= resourceManager.FarmerPrice;
 			}
 
@@ -63,6 +69,12 @@ public class WorkerSpawnSystem : SystemBase
 				entityCommandBuffer.SetComponent(newDroneEntity, new Translation
 				{
 					Value = gameState.LastStorePosition
+				});
+
+				entityCommandBuffer.AddComponent<RandomNumberGenerator>(newDroneEntity);
+				entityCommandBuffer.SetComponent(newDroneEntity, new RandomNumberGenerator
+				{
+					rng = new Random((uint)newDroneEntity.Index * 100)
 				});
 
 				resourceManager.DroneCoins -= resourceManager.DronePrice;
