@@ -11,6 +11,10 @@ public struct WorldGenerator : IComponentData
 	public int2 RockSizeMin;
 	public int2 RockSizeMax;
 
+	public int PlowedTileTargetCount;
+
+	public Entity UnplowedTilePrefab;
+	public Entity PlowedTilePrefab;
 	public Entity StorePrefab;
 	public Entity RockPrefab;
 }

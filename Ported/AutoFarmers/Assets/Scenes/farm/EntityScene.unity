@@ -160,6 +160,9 @@ MonoBehaviour:
   RockSizeMax:
     x: 4
     y: 4
+  PlowedTileTargetCount: 100
+  UnplowedTilePrefab: {fileID: 7817550659131983143, guid: 1244d86937f710f40996550bb16217cf, type: 3}
+  PlowedTilePrefab: {fileID: 7817550659131983143, guid: ee507ad3a6b2d434695a36ac107a2621, type: 3}
   StorePrefab: {fileID: 6701329909793408903, guid: b78c63a24e216f04e835ba36eff013ae, type: 3}
   RockPrefab: {fileID: 7817550659131983143, guid: ca0e61877fe94634fa2dc53c3ebd4758, type: 3}
 --- !u!4 &860859459
@@ -215,7 +218,6 @@ MonoBehaviour:
     x: 1
     y: 1
     z: 1
-  TilePrefab: {fileID: 7817550659131983143, guid: 1244d86937f710f40996550bb16217cf, type: 3}
 --- !u!4 &1420970329
 Transform:
   m_ObjectHideFlags: 0
