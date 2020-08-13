@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d00a97fccb8c9dd4587024e6825c19f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  PlantPrefab: {fileID: 5732558760118206759, guid: c1c97c14eb9850f4d9020cf6ba309d6b, type: 3}
   PlantScale:
     x: 0.25
     y: 1
