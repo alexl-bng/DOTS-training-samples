@@ -61,9 +61,13 @@ public class CarriedPlantUpdateSystem : SystemBase
 
 		Entities
 			.WithName("Carried_Plant_Update")
-			.ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref WorkerIntent_Sell sellIntent) =>
+			.WithAll<WorkerIntent_Sell>()
+			.ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref WorkerIntent_SellSearch sellIntent) =>
 			{
-				entityCommandBuffer.SetComponent(entityInQueryIndex, sellIntent.PlantEntity, new Translation { Value = translation.Value });
+				if (sellIntent.PlantEntity != Entity.Null)
+				{
+					entityCommandBuffer.SetComponent(entityInQueryIndex, sellIntent.PlantEntity, new Translation { Value = translation.Value });
+				}
 
 			}).ScheduleParallel();
 
@@ -136,8 +140,8 @@ public class PlantHarvestSystem : SystemBase
 					// update worker state
 					entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
 					entityCommandBuffer.RemoveComponent<WorkerIntent_Harvest>(entityInQueryIndex, entity);
-					entityCommandBuffer.AddComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
-					entityCommandBuffer.SetComponent(entityInQueryIndex, entity, new WorkerIntent_Sell { PlantEntity = harvestIntent.PlantEntity });
+					entityCommandBuffer.AddComponent<WorkerIntent_SellSearch>(entityInQueryIndex, entity);
+					entityCommandBuffer.SetComponent(entityInQueryIndex, entity, new WorkerIntent_SellSearch { PlantEntity = harvestIntent.PlantEntity });
 				}
 				else
 				{
@@ -168,8 +172,8 @@ public class PlantSellSystem : SystemBase
 
 		Entities
 			.WithName("Plant_Sell")
-			.WithAll<PathComplete>()
-			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_Sell sellIntent, ref Path path) =>
+			.WithAll<PathComplete, WorkerIntent_Sell>()
+			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_SellSearch sellSearchIntent, ref Path path) =>
 			{
 				// update game state
 				entityCommandBuffer.SetComponent(gameStateEntity, new GameState {
@@ -184,12 +188,13 @@ public class PlantSellSystem : SystemBase
 				entityCommandBuffer.SetComponent(gameStateEntity, resourceManager);
 
 				// update plant state
-				entityCommandBuffer.RemoveComponent<PlantStateCarried>(sellIntent.PlantEntity);
-				entityCommandBuffer.AddComponent<PlantStateWarpingOut>(sellIntent.PlantEntity);
+				entityCommandBuffer.RemoveComponent<PlantStateCarried>(sellSearchIntent.PlantEntity);
+				entityCommandBuffer.AddComponent<PlantStateWarpingOut>(sellSearchIntent.PlantEntity);
 
 				// update worker state
 				entityCommandBuffer.RemoveComponent<PathComplete>(entity);
 				entityCommandBuffer.RemoveComponent<WorkerIntent_Sell>(entity);
+				entityCommandBuffer.RemoveComponent<WorkerIntent_SellSearch>(entity);
 				entityCommandBuffer.AddComponent<WorkerIntent_None>(entity);
 
 			}).WithoutBurst().Run();

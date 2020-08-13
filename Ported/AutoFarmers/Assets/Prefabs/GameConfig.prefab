@@ -47,7 +47,7 @@ MonoBehaviour:
   PlantPrefab: {fileID: 5732558760118206759, guid: c1c97c14eb9850f4d9020cf6ba309d6b, type: 3}
   PlantScale:
     x: 0.25
-    y: 1
+    y: 10
     z: 0.25
   GrowthTime: 5
   WarpTime: 1
