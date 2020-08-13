@@ -24,6 +24,9 @@ public class WorldGeneratorSystem : SystemBase
 
 		NativeHashSet<int2> usedTiles = new NativeHashSet<int2>(0, Allocator.TempJob);
 
+	    BufferFromEntity<GridSectionReference> sectionRefs = GetBufferFromEntity<GridSectionReference>(true);
+	    BufferFromEntity<GridTile> tileBuffers = GetBufferFromEntity<GridTile>(false);
+
 		Entities
 			.WithDisposeOnCompletion(usedTiles)
 			.WithAll<NeedsWorldGeneration>()
@@ -57,6 +60,44 @@ public class WorldGeneratorSystem : SystemBase
 						usedTiles.Add(tryLocation + new int2(0, -1));
 						usedTiles.Add(tryLocation + new int2(1, 0));
 						usedTiles.Add(tryLocation + new int2(-1, 0));
+
+						attempts = 0;
+					}
+					else
+					{
+						attempts--;
+					}
+				}
+			}
+
+			// TODO: rocks
+
+
+			for (int plowedTileIndex = 0; plowedTileIndex < worldGen.PlowedTileTargetCount; plowedTileIndex++)
+			{
+				int attempts = 10;
+				while (attempts > 0)
+				{
+					int2 tryLocation = new int2(rng.rng.NextInt(0, gridDims.x), rng.rng.NextInt(0, gridDims.y));
+
+					if (!usedTiles.Contains(tryLocation))
+					{
+						int sectionIndex = grid.GetSectionId(tryLocation);
+						int tileIndex = grid.GetSectionId(tryLocation);
+						Entity sectionEntity = sectionRefs[entity][sectionIndex].SectionEntity;
+
+						DynamicBuffer<GridTile> tileBuffer = tileBuffers[sectionEntity];
+
+						GridTile tile = tileBuffer[tileIndex];
+
+						tile.IsPlowed = true;
+						tile.RenderTileDirty = true;
+
+						tileBuffer[tileIndex] = tile;
+
+						ecb.AddComponent<GridSectionDirty>(sectionEntity);
+
+						usedTiles.Add(tryLocation);
 
 						attempts = 0;
 					}

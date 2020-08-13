@@ -3,13 +3,22 @@ using Unity.Mathematics;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
-public class SpawnGridSystem : SystemBase
+public class GridSpawnerSystem : SystemBase
 {
+	private EntityQuery _worldGeneratorQuery;
+
+	protected override void OnCreate()
+	{
+		_worldGeneratorQuery = EntityManager.CreateEntityQuery(typeof(WorldGenerator));
+	}
+
 	protected override void OnUpdate()
 	{
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
-		
+
+		WorldGenerator worldGen = _worldGeneratorQuery.GetSingleton<WorldGenerator>();
+
 		Entities.ForEach((Entity entity, in GridSpawner spawner, in LocalToWorld ltw) =>
 		{
 			Entity gridEntity = ecb.CreateEntity();
@@ -56,7 +65,7 @@ public class SpawnGridSystem : SystemBase
 					{
 						for (int tileZ = 0; tileZ < spawner.GridSectionDimensions.y; tileZ++)
 						{
-							Entity tileEntity = ecb.Instantiate(spawner.TilePrefab);
+							Entity tileEntity = ecb.Instantiate(worldGen.UnplowedTilePrefab);
 
 							ecb.SetComponent(tileEntity, new Translation
 							{
@@ -80,5 +89,10 @@ public class SpawnGridSystem : SystemBase
 		}).Schedule();
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
+	}
+
+	protected override void OnDestroy()
+	{
+		_worldGeneratorQuery.Dispose();
 	}
 }

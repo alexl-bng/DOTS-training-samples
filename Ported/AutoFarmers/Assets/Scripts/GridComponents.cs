@@ -44,6 +44,11 @@ public struct Grid : IComponentData
 	}
 }
 
+public struct GridSectionDirty : IComponentData
+{
+	
+}
+
 public struct GridSection : IComponentData
 {
 	public int2 TileOffset;
@@ -78,6 +83,7 @@ public struct GridTile : IBufferElementData
 	public bool IsPlowed;
 	public bool IsReserved;
 	public OccupationType OccupationType;
-	public Entity RenderTileEntity;
 	public Entity OccupyingEntity;
+	public bool RenderTileDirty;
+	public Entity RenderTileEntity;
 }
