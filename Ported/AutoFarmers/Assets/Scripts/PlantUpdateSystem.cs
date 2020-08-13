@@ -192,7 +192,7 @@ public class PlantSellSystem : SystemBase
 				entityCommandBuffer.RemoveComponent<WorkerIntent_Sell>(entity);
 				entityCommandBuffer.AddComponent<WorkerIntent_None>(entity);
 
-			}).Run();
+			}).WithoutBurst().Run();
 
 		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
 	}
