@@ -18,7 +18,8 @@ public class HarvestSearchSystem : SystemBase
 			All = new[]
 			{
 				ComponentType.ReadOnly<Plant>(),
-				ComponentType.ReadOnly<PlantStateGrown>(),				
+				ComponentType.ReadOnly<PlantStateGrown>(),
+				ComponentType.ReadOnly<Translation>(),
 			}
 		});
 
@@ -31,7 +32,8 @@ public class HarvestSearchSystem : SystemBase
 			},
 			All = new[]
 			{
-				ComponentType.ReadWrite<WorkerIntent_HarvestSearch>(),
+				ComponentType.ReadOnly<WorkerIntent_HarvestSearch>(),
+				ComponentType.ReadWrite<Path>(),
 			}
 		});
 	}
@@ -41,10 +43,12 @@ public class HarvestSearchSystem : SystemBase
 	{
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
-
-
+		
+		//opt: make me async and use me in a job
 		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArray(Allocator.TempJob);//, out JobHandle plantEntitiesHandle);		
+		NativeArray<Translation> translations = m_plantQuery.ToComponentDataArray<Translation>(Allocator.TempJob);//, out JobHandle plantEntitiesHandle);		
 		NativeArray<Entity> workerEntities = m_workerQuery.ToEntityArray(Allocator.TempJob);//, out JobHandle workerEntitiesHandle);
+		NativeArray<Path> paths = m_workerQuery.ToComponentDataArray<Path>(Allocator.TempJob);//, out JobHandle plantEntitiesHandle);		
 
 		//if (plantEntities.Length == 0)
 		//{
@@ -60,6 +64,15 @@ public class HarvestSearchSystem : SystemBase
 				//UnityEngine.Debug.Log("Assigning");
 				ecb.AddComponent(workerEntities[i], new WorkerIntent_Harvest { PlantEntity = plantEntities[i] });
 				ecb.RemoveComponent<PlantStateGrown>(plantEntities[i]);
+				Path path = paths[i];
+				Translation plantLocation = translations[i];
+				path.targetPosition = new float3
+				{
+					x = plantLocation.Value.x,
+					y = plantLocation.Value.y,
+					z = plantLocation.Value.z,
+				};
+				ecb.SetComponent(workerEntities[i], path);
 			}
 			else
 			{
@@ -71,6 +84,8 @@ public class HarvestSearchSystem : SystemBase
 
 		plantEntities.Dispose();
 		workerEntities.Dispose();
+		translations.Dispose();
+		paths.Dispose();
 
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
