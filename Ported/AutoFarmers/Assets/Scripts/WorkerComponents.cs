@@ -21,4 +21,7 @@ public struct WorkerIntent_Plow : IComponentData
 }
 public struct WorkerIntent_Break : IComponentData { }
 
+public struct WorkerIntent_HarvestSearch : IComponentData { }
+
+
 

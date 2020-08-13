@@ -60,20 +60,25 @@ public class DetermineIntentSystem_Farmer : SystemBase
 				ref Path path,
 				ref RandomNumberGenerator rng) =>
 		{
+			UnityEngine.Debug.Log("thinking...");
 			bool switchedToState = false;
 			int nextStateIndex = rng.rng.NextInt(0, 3);
 			switch (nextStateIndex)
 			{
 				case 0:
+					UnityEngine.Debug.Log("Harvesting...");
 					switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, plantTranslations, plantEntities);
 					break;
 				case 1:
+					UnityEngine.Debug.Log("sowing...");
 					switchedToState = WorkerIntentUtils.SwitchToSowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 2:
+					UnityEngine.Debug.Log("plowing...");
 					switchedToState = WorkerIntentUtils.SwitchToPlowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 3:
+					UnityEngine.Debug.Log("breaking...");
 					switchedToState = WorkerIntentUtils.SwitchToBreakIntent(ecb, entity);
 					break;
 
@@ -155,6 +160,8 @@ class WorkerIntentUtils
 {
 	public static bool SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity, NativeArray<Translation> plantTranslations, NativeArray<Entity> plantEntities)
 	{
+		ecb.AddComponent<WorkerIntent_HarvestSearch>(entity);
+		return true;
 		//return false;
 		if (plantEntities.Length == 0 || plantEntities[0] == Entity.Null)
 		{
