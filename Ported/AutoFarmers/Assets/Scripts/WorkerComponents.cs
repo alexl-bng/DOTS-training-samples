@@ -11,7 +11,10 @@ public struct WorkerIntent_Sell : IComponentData
 	public Entity PlantEntity;
 }
 
-public struct WorkerIntent_Plant : IComponentData { }
+public struct WorkerIntent_Sow : IComponentData
+{
+	public int2 TargetTilePos;
+}
 public struct WorkerIntent_Plow : IComponentData
 {
 	public int2 TargetTilePos;

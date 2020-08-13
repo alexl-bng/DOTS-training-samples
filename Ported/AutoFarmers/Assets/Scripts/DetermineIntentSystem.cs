@@ -1,8 +1,26 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
+using Unity.Jobs;
 
 public class DetermineIntentSystem_Farmer : SystemBase
 {
+	private EntityQuery m_plantQuery;
+
+	protected override void OnCreate()
+	{
+		m_plantQuery = GetEntityQuery(new EntityQueryDesc
+		{
+			All = new[]
+			{
+				ComponentType.ReadOnly<Plant>(),
+				ComponentType.ReadOnly<Translation>()
+			}
+		});
+	}
+
+
 	protected override void OnUpdate()
 	{
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
@@ -13,33 +31,50 @@ public class DetermineIntentSystem_Farmer : SystemBase
 		BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>();
 		BufferFromEntity<GridTile> tileBuffer = GetBufferFromEntity<GridTile>();
 
-		Entities
-			.WithAll<Farmer, WorkerIntent_None>()			
+		//tjtj: does the query actually have to ask for the data I ask for here? I guess it wouldn't make sense to not have it...
+		//tjtj: why does this need to be TempJob instead of Temp? I saw other code that it worked with (using Run() though)
+		//tjrj: Are these basically just kicking off jobs and the handles are the wait handles? Presumably the native arrays will be bullshit until the handle is complete?
+		NativeArray<Translation> plantTranslations = m_plantQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out JobHandle plantTranslationHandle);
+		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArrayAsync(Allocator.TempJob, out JobHandle plantEntitiesHandle);
+
+		Dependency = JobHandle.CombineDependencies(Dependency, plantTranslationHandle, plantEntitiesHandle);
+
+		JobHandle foreachHandle = Entities
+			.WithAll<Farmer, WorkerIntent_None>()
+			.WithDisposeOnCompletion(plantTranslations)
+			.WithDisposeOnCompletion(plantEntities)
 			.ForEach((
 				Entity entity,
 				ref Path path,
 				ref RandomNumberGenerator rng) =>
 		{
-			int nextStateIndex = rng.rng.NextInt(2, 3);
+			bool switchedToState = false;
+			int nextStateIndex = rng.rng.NextInt(0, 3);
 			switch (nextStateIndex)
 			{
 				case 0:
-					WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity);
+					switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, plantTranslations, plantEntities);
 					break;
 				case 1:
-					WorkerIntentUtils.SwitchToPlantIntent(ecb, entity);
+					switchedToState = WorkerIntentUtils.SwitchToSowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 2:
-					WorkerIntentUtils.SwitchToPlowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
+					switchedToState = WorkerIntentUtils.SwitchToPlowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 3:
-					WorkerIntentUtils.SwitchToBreakIntent(ecb, entity);
+					switchedToState = WorkerIntentUtils.SwitchToBreakIntent(ecb, entity);
 					break;
 
 			}
 
-			ecb.RemoveComponent<WorkerIntent_None>(entity);
-		}).Schedule();
+			if (switchedToState)
+			{
+				ecb.RemoveComponent<WorkerIntent_None>(entity);
+			}
+			
+		}).Schedule(Dependency);
+
+		Dependency = foreachHandle;
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
 	}
@@ -54,18 +89,25 @@ public class DetermineIntentSystem_Drone: SystemBase
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
-		Entities.WithAll<Drone>().ForEach((Entity entity, ref RandomNumberGenerator rng) =>
-		{
+		Entities
+			.WithAll<Drone, WorkerIntent_None>()
+			.ForEach((
+				Entity entity,				
+				ref RandomNumberGenerator rng) =>
+			{
+				bool switchedToState = false;
 			int nextStateIndex = rng.rng.NextInt(0, 1);
 			switch (nextStateIndex)
 			{
 				case 0:
-					WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity);
+					switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, new NativeArray<Translation>(), new NativeArray<Entity>());
 					break;				
 
 			}
-
-			ecb.RemoveComponent<WorkerIntent_None>(entity);
+			if (switchedToState)
+			{
+				ecb.RemoveComponent<WorkerIntent_None>(entity);
+			}
 		}).Schedule();
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
@@ -75,33 +117,80 @@ public class DetermineIntentSystem_Drone: SystemBase
 
 class WorkerIntentUtils
 {
-	public static void SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity)
+	public static bool SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity, NativeArray<Translation> plantTranslations, NativeArray<Entity> plantEntities)
 	{
-		//find a plant to harvest. Maybe just tile location instead?
+		if (plantEntities.Length == 0)
+		{
+			return false;
+		}
 		//reserve?
-		//ecb.AddComponent<HarvestTarget>(entity);
-		//ecb.SetComponent<HarvestTarget>(foundPlantEntity);
+
+		//tjtj: would this be better? AddComponent<WorkerIntent_Harvest>(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
 		ecb.AddComponent<WorkerIntent_Harvest>(entity);
+		ecb.SetComponent(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
+		return true;
 	}
 
-	public static void SwitchToBreakIntent(EntityCommandBuffer ecb, Entity entity)
+	public static bool SwitchToBreakIntent(EntityCommandBuffer ecb, Entity entity)
 	{
+		return false;
 		//find a rock to kill. Maybe just tile location instead?		
 		//ecb.AddComponent<SmashTarget>(entity);
 		//ecb.SetComponent<SmashTarget>(foundRockEntity);
 		ecb.AddComponent<WorkerIntent_Break>(entity);
 	}
 
-	public static void SwitchToPlantIntent(EntityCommandBuffer ecb, Entity entity)
+	public static bool SwitchToSowIntent(
+		EntityCommandBuffer ecb,
+		Entity workerEntity,
+		ref Grid grid,
+		Entity gridEntity,
+		ref BufferFromEntity<GridSectionReference> sectionRefBuffer,
+		ref BufferFromEntity<GridTile> tileBuffer,
+		RandomNumberGenerator rng,
+		ref Path path)
 	{
-		//find a tile to plant on. Maybe just tile location instead?
-		//reserve?
-		//ecb.AddComponent<PlantTarget>(entity);
-		//ecb.SetComponent<PlantTarget>(foundTileEntity);
-		ecb.AddComponent<WorkerIntent_Plant>(entity);
+		return false;
+		int2 worldDim = grid.GetWorldDimensions();
+
+		int tries = 10;
+
+		bool foundTile = false;
+		int x;
+		int y;
+		do
+		{
+			//UnityEngine.Debug.Log(string.Format("Tries: {0}", tries));
+			tries--;
+			x = rng.rng.NextInt(0, worldDim.x);
+			y = rng.rng.NextInt(0, worldDim.y);
+			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
+			foundTile = tile.IsPlowed;
+			if (foundTile)			
+				UnityEngine.Debug.Log("Sowing!");
+			} while (!foundTile && tries > 0);
+
+		if (foundTile)
+		{			
+			//reserve?
+			ecb.AddComponent<WorkerIntent_Sow>(workerEntity);
+			ecb.SetComponent(workerEntity, new WorkerIntent_Sow
+			{
+				TargetTilePos = new int2(x, y)
+			});
+
+			path.targetPosition = new float3(x, 0, y);
+		}
+		else
+		{
+			//UnityEngine.Debug.Log(string.Format("Failed to get target tile"));
+			return false;
+		}
+
+		return true;
 	}
 
-	public static void SwitchToPlowIntent(
+	public static bool SwitchToPlowIntent(
 		EntityCommandBuffer ecb, 
 		Entity workerEntity,
 		ref Grid grid, 
@@ -126,6 +215,7 @@ class WorkerIntentUtils
 		int y;
 		do
 		{
+			//UnityEngine.Debug.Log(string.Format("Tries: {0}", tries));
 			tries--;
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
@@ -135,7 +225,6 @@ class WorkerIntentUtils
 
 		if (foundTile)
 		{
-			//find a tile to plow on. Maybe just tile location instead?
 			//reserve?
 			ecb.AddComponent<WorkerIntent_Plow>(workerEntity);
 			ecb.SetComponent(workerEntity, new WorkerIntent_Plow
@@ -145,6 +234,13 @@ class WorkerIntentUtils
 
 			path.targetPosition = new float3(x, 0, y);
 		}
+		else
+		{
+			//UnityEngine.Debug.Log(string.Format("Failed to get target tile"));
+			return false;
+		}
+
+		return true;
 	}
 
 
