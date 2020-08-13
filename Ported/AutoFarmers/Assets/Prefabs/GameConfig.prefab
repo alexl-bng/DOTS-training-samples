@@ -66,3 +66,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FarmerPrefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
   DronePrefab: {fileID: 6701329909793408903, guid: d5dd6321b51eb2c43992474b89869181, type: 3}
+  MaxFarmerCount: 1000
+  MaxDroneCount: 1000
