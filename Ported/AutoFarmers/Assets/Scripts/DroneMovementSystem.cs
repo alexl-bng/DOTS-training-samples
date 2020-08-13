@@ -16,13 +16,13 @@ public class DroneMovementSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        var ecb = m_ecb.CreateCommandBuffer();
+        var ecb = m_ecb.CreateCommandBuffer().AsParallelWriter();
         var deltaTime = Time.DeltaTime;
         
         Entities
             .WithName("drone_movement")
             .WithAll<Drone, Path>()
-            .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
+            .ForEach((int entityInQueryIndex, Entity entity, ref Path path, in LocalToWorld ltw) =>
                 {
                     // Drones make a direct bee line to their target
                     // TODO: account for smoothing
@@ -31,17 +31,17 @@ public class DroneMovementSystem : SystemBase
                     {
                         if (!HasComponent<PathComplete>(entity))
                         {
-                            ecb.AddComponent(entity, new PathComplete());    
+                            ecb.AddComponent(entityInQueryIndex, entity, new PathComplete());    
                         }
                     }
                     else
                     {
                         if (HasComponent<PathComplete>(entity))
                         {
-                            ecb.RemoveComponent<PathComplete>(entity);
+                            ecb.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
                         }
                         
-                        ecb.AddComponent(entity,  new Translation()
+                        ecb.AddComponent(entityInQueryIndex, entity,  new Translation()
                         {
                             Value = Vector3.MoveTowards(ltw.Position, path.targetPosition, path.speed * deltaTime)
                         });
@@ -53,7 +53,7 @@ public class DroneMovementSystem : SystemBase
                         Debug.DrawLine(new Vector3(ltw.Position.x, 0.1f, ltw.Position.z),
                             new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
                     }
-                }).Schedule();
+                }).ScheduleParallel();
         
         m_ecb.AddJobHandleForProducer(Dependency);
     }
