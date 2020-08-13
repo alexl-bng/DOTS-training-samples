@@ -34,8 +34,6 @@ public class PlowSystem : SystemBase
 				ref Path path,
 				in Translation translation) =>
 			{
-				Debug.Log($"updating plow with field base loc {plow.BaseLoc} size {plow.FieldSize} index {plow.CurrentIndex}");
-
 				int targetX = plow.CurrentIndex / plow.FieldSize.y;
 				int targetZ = (targetX % 2 == 0) ? plow.CurrentIndex % plow.FieldSize.y : plow.FieldSize.y - 1 - (plow.CurrentIndex % plow.FieldSize.y);
 				int2 targetTile = plow.BaseLoc + new int2(targetX, targetZ);
