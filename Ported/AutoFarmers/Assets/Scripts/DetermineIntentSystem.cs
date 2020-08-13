@@ -8,7 +8,6 @@ public class DetermineIntentSystem_Farmer : SystemBase
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
-		//once
 		Grid grid = GetSingleton<Grid>();
 		Entity gridEntity = GetSingletonEntity<Grid>();
 		BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>();
@@ -159,17 +158,9 @@ class WorkerIntentUtils
 		return tile;
 	}
 
-	/*
-	public static GetTileAt(int x, int y, Grid grid, )
-	{
-		//each
-		int2 pos = new int2(x, y);
-		int sectionRefId = grid.GetSectionId(pos);
-		Entity sectionRef = sectionRefBuffer[sectionRefId].SectionEntity;
-		GridSection section = GetComponent<GridSection>(sectionRef);
-		int tileIndex = section.GetTileIndex(pos);
-		DynamicBuffer<GridTile> tileBuffer = GetBuffer<GridTile>(sectionRef);
-		GridTile tile = tileBuffer[tileIndex];
-	}
-	*/
 }
+
+
+
+
+
