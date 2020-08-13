@@ -297,8 +297,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GridSectionDimensions:
-    x: 16
-    y: 16
+    x: 21
+    y: 21
   GridSectionCount:
     x: 10
     y: 10

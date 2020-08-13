@@ -1,6 +1,9 @@
 ﻿using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Random = Unity.Mathematics.Random;
+
+//using UnityEngine;
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public class GridSpawnerSystem : SystemBase
@@ -10,6 +13,8 @@ public class GridSpawnerSystem : SystemBase
 	protected override void OnCreate()
 	{
 		_worldGeneratorQuery = EntityManager.CreateEntityQuery(typeof(WorldGenerator));
+
+		//Debug.Log($"size of tile buffer element is {System.Runtime.InteropServices.Marshal.SizeOf<GridTile>()}");
 	}
 
 	protected override void OnUpdate()
