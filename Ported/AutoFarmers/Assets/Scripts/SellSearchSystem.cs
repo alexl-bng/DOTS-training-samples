@@ -61,6 +61,7 @@ public class SellSearchSystem : SystemBase
 				ecb.AddComponent(workerEntities[i], new WorkerIntent_Sell { });
 				Path newPath = workerPaths[i];
 				newPath.targetPosition = storeTranslations[0].Value;
+				ecb.RemoveComponent<PathComplete>(workerEntities[i]);
 				ecb.SetComponent(workerEntities[i], newPath);
 			}
 			else

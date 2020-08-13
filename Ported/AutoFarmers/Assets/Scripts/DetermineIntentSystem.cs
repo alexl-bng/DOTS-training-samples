@@ -222,6 +222,7 @@ class WorkerIntentUtils
 			});
 
 			path.targetPosition = new float3(x, 0, y);
+			ecb.RemoveComponent<PathComplete>(workerEntity);
 		}
 		else
 		{
@@ -350,6 +351,7 @@ class WorkerIntentUtils
 			//Debug.Log($"plowing field with base loc {baseLoc} size {fieldSize}");
 
 			path.targetPosition = new float3(baseLoc.x, 0, baseLoc.y);
+			ecb.RemoveComponent<PathComplete>(workerEntity);
 
 			return true;
 		}
