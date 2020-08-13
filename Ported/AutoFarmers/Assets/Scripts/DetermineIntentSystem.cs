@@ -179,7 +179,7 @@ class WorkerIntentUtils
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
 			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
-			foundTile = tile.IsPlowed;
+			foundTile = tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
 			//if (foundTile)			
 			//	UnityEngine.Debug.Log("Sowing!");
 			} while (!foundTile && tries > 0);
