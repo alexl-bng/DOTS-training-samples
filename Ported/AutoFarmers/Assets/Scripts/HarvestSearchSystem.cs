@@ -72,6 +72,7 @@ public class HarvestSearchSystem : SystemBase
 					y = plantLocation.Value.y,
 					z = plantLocation.Value.z,
 				};
+				ecb.RemoveComponent<PathComplete>(workerEntities[i]);
 				ecb.SetComponent(workerEntities[i], path);
 			}
 			else

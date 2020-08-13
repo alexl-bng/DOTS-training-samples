@@ -220,6 +220,7 @@ class WorkerIntentUtils
 			});
 
 			path.targetPosition = new float3(x, 0, y);
+			ecb.RemoveComponent<PathComplete>(workerEntity);
 		}
 		else
 		{
@@ -271,6 +272,7 @@ class WorkerIntentUtils
 			});
 
 			path.targetPosition = new float3(x, 0, y);
+			ecb.RemoveComponent<PathComplete>(workerEntity);
 		}
 		else
 		{
