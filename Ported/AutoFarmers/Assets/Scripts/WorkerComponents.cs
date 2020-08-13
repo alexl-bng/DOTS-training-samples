@@ -6,10 +6,7 @@ public struct WorkerIntent_Harvest : IComponentData
 	public Entity PlantEntity;
 }
 
-public struct WorkerIntent_Sell : IComponentData
-{
-	public Entity PlantEntity;
-}
+public struct WorkerIntent_Sell : IComponentData {}
 
 public struct WorkerIntent_Sow : IComponentData
 {
@@ -22,6 +19,11 @@ public struct WorkerIntent_Plow : IComponentData
 public struct WorkerIntent_Break : IComponentData { }
 
 public struct WorkerIntent_HarvestSearch : IComponentData { }
+
+public struct WorkerIntent_SellSearch : IComponentData
+{
+	public Entity PlantEntity;
+}
 
 
 

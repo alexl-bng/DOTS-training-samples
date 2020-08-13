@@ -254,8 +254,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 742e4b2e858405f4dbf93ece382d7b6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StoreTargetCount: 50
-  RockAttempts: 1000
+  StoreTargetCount: 5
+  RockAttempts: 50
   RockSizeMin:
     x: 1
     y: 1
@@ -300,8 +300,8 @@ MonoBehaviour:
     x: 21
     y: 21
   GridSectionCount:
-    x: 10
-    y: 10
+    x: 2
+    y: 2
   GridWorldScale:
     x: 1
     y: 1
@@ -351,9 +351,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
   Count:
-    x: 25
+    x: 3
     y: 1
-    z: 25
+    z: 1
   Spacing:
     x: 0
     y: 0
