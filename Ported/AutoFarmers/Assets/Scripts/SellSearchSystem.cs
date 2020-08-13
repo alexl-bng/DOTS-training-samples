@@ -72,6 +72,8 @@ public class SellSearchSystem : SystemBase
 
 		storeEntities.Dispose();
 		workerEntities.Dispose();
+		workerPaths.Dispose();
+		storeTranslations.Dispose();
 
 		m_ecbSystem.AddJobHandleForProducer(Dependency);
 	}
