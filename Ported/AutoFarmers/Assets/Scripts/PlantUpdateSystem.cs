@@ -4,33 +4,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-public class PlantInitialize : SystemBase
-{
-	private EntityCommandBufferSystem m_CommandBufferSystem;
-
-	protected override void OnCreate()
-	{
-		m_CommandBufferSystem = World.GetExistingSystem<EndSimulationEntityCommandBufferSystem>();
-	}
-
-	protected override void OnUpdate()
-	{
-		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
-
-		Entities
-			.WithName("Plant_Initialize")
-			.WithAll<Plant>()
-			.WithNone<PlantStateGrowing, PlantStateGrown, PlantStateCarried>()
-			.ForEach((int entityInQueryIndex, Entity entity) =>
-			{
-				entityCommandBuffer.AddComponent(entityInQueryIndex, entity, new PlantStateGrowing { GrowthProgress = 0.0f });
-
-			}).ScheduleParallel();
-
-		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
-	}
-}
-
 public class PlantGrowthSystem : SystemBase
 {
 	private EntityCommandBufferSystem m_CommandBufferSystem;
