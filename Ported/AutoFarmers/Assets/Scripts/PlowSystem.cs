@@ -10,7 +10,7 @@ public class PlowSystem_PathComplete : SystemBase
 
 	protected override void OnCreate()
 	{
-		Enabled = false;
+		Enabled = true;
 		m_gridQuery = EntityManager.CreateEntityQuery(typeof(Grid));
 	}
 
@@ -59,7 +59,7 @@ public class PlowSystem_DistanceCheck : SystemBase
 
 	protected override void OnCreate()
 	{
-		Enabled = true;
+		Enabled = false;
 		m_gridQuery = EntityManager.CreateEntityQuery(typeof(Grid));
 	}
 
@@ -82,9 +82,9 @@ public class PlowSystem_DistanceCheck : SystemBase
 				ref RandomNumberGenerator rng,
 				in WorkerIntent_Plow plow,
 				in Path path,
-				in LocalToWorld ltw) =>
+				in Translation translation) =>
 			{
-				float3 flattenedWorldPos = new float3(ltw.Position.x, 0.0f, ltw.Position.z);
+				float3 flattenedWorldPos = new float3(translation.Value.x, 0.0f, translation.Value.z);
 				float3 targetTileWorldPos = new float3(plow.TargetTilePos.x, 0, plow.TargetTilePos.y);
 				float3 diff = flattenedWorldPos - targetTileWorldPos;
 				float dist = math.length(diff);
