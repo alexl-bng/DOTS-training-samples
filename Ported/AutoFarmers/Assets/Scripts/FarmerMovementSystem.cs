@@ -35,28 +35,32 @@ public class FarmerMovementSystem : SystemBase
 
         m_rockQuery.CompleteDependency();
         var deltaTime = Time.DeltaTime;
-        Dependency = JobHandle.CombineDependencies(Dependency, rockEntitiesHandle, rockLocationsHandle);
-        Dependency = JobHandle.CombineDependencies(Dependency, rockOccupantsHandle);
-        var ecb = m_ecb.CreateCommandBuffer();
+        Dependency = JobHandle.CombineDependencies(Dependency, rockEntitiesHandle);
+		Dependency = JobHandle.CombineDependencies(Dependency, rockLocationsHandle);
+		Dependency = JobHandle.CombineDependencies(Dependency, rockOccupantsHandle);
+        var ecb = m_ecb.CreateCommandBuffer().AsParallelWriter();
         
         Entities
             .WithName("farmer_movement")
             .WithAll<Farmer, Path>()
-            .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
+			.WithDisposeOnCompletion(rockLocations)
+			.WithDisposeOnCompletion(rockOccupants)
+			.WithDisposeOnCompletion(rockEntities)
+			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, in LocalToWorld ltw) =>
             {
                 if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1 &&
                     math.abs(path.targetPosition.z - ltw.Position.z) < 0.1)
                 {
                     if (!HasComponent<PathComplete>(entity))
                     {
-                        ecb.AddComponent(entity, new PathComplete());
+                        ecb.AddComponent(entityInQueryIndex, entity, new PathComplete());
                     }
                 }
                 else
                 {
                     if (HasComponent<PathComplete>(entity))
                     {
-                        ecb.RemoveComponent<PathComplete>(entity);
+                        ecb.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
                     }
 
                     // TODO: account for smoothing
@@ -75,29 +79,29 @@ public class FarmerMovementSystem : SystemBase
                             ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
-                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, ref rockOccupants, nextLocation, ref ecb))
+                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, ref rockOccupants, nextLocation, ref ecb, entityInQueryIndex))
                     {
-                        ecb.RemoveComponent<WorkerIntent_None>(entity);
+                        ecb.RemoveComponent<WorkerIntent_None>(entityInQueryIndex, entity);
                         
                         if (!HasComponent<WorkerIntent_Break>(entity))
                         {
-                            ecb.AddComponent(entity, new WorkerIntent_Break());
-                            path.sourcePosition = ltw.Position;
+                            ecb.AddComponent(entityInQueryIndex, entity, new WorkerIntent_Break());
+							path.sourcePosition = ltw.Position;
                         }
                     }
                     else
                     {
                         if (HasComponent<WorkerIntent_Break>(entity))
                         {
-                            ecb.RemoveComponent<WorkerIntent_Break>(entity);
-                            
-                            ecb.SetComponent(entity, new Translation()
+                            ecb.RemoveComponent<WorkerIntent_Break>(entityInQueryIndex, entity);
+							
+							ecb.SetComponent(entityInQueryIndex, entity, new Translation()
                             {
                                 Value = path.sourcePosition
                             });
                         }
                         
-                        ecb.SetComponent(entity, new Translation()
+                        ecb.SetComponent(entityInQueryIndex, entity, new Translation()
                         {
                             Value = nextLocation
                         });
@@ -113,12 +117,10 @@ public class FarmerMovementSystem : SystemBase
                 Debug.DrawLine(new Vector3(ltw.Position.x, 0.1f, ltw.Position.z),
                     new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
             }
-        ).Run();
-        
-        rockLocations.Dispose();
-        rockOccupants.Dispose();
-        rockEntities.Dispose();
-    }
+        ).ScheduleParallel();
+		
+		m_ecb.AddJobHandleForProducer(Dependency);
+	}
 
     
 }
@@ -126,7 +128,7 @@ public class FarmerMovementSystem : SystemBase
 public class FarmerUtils
 {
     public static bool IsObstructionPresent(ref NativeArray<Entity> entities, ref NativeArray<LocalToWorld> locations, 
-        ref NativeArray<GridOccupant> occupants, float3 position, ref EntityCommandBuffer ecb)
+        ref NativeArray<GridOccupant> occupants, float3 position, ref EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex)
     {
         for (int i = 0; i < entities.Length; i++)
         {
@@ -144,7 +146,7 @@ public class FarmerUtils
                 bounds.y <= position.z && 
                 position.z <= bounds.z)
             {
-                ecb.AddComponent(entities[i], new WorkerIntent_Break());
+                ecb.AddComponent(entityInQueryIndex, entities[i], new WorkerIntent_Break());
                 return true;
             }
         }
