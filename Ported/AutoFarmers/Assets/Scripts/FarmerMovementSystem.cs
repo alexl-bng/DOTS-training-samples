@@ -29,23 +29,19 @@ public class FarmerMovementSystem : SystemBase
     
     protected override void OnUpdate()
     {
-        var rockEntities = m_rockQuery.ToEntityArrayAsync(Allocator.TempJob, out var rockEntitiesHandle);
-        var rockLocations = m_rockQuery.ToComponentDataArrayAsync<LocalToWorld>(Allocator.TempJob, out var rockLocationsHandle);
-        var rockOccupants = m_rockQuery.ToComponentDataArrayAsync<GridOccupant>(Allocator.TempJob, out var rockOccupantsHandle);
+        Grid grid = GetSingleton<Grid>();
+        Entity gridEntity = GetSingletonEntity<Grid>();
+        BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>(true);
+        BufferFromEntity<GridTile> tileBufferMap = GetBufferFromEntity<GridTile>(true);
 
-        m_rockQuery.CompleteDependency();
         var deltaTime = Time.DeltaTime;
-        Dependency = JobHandle.CombineDependencies(Dependency, rockEntitiesHandle);
-		Dependency = JobHandle.CombineDependencies(Dependency, rockLocationsHandle);
-		Dependency = JobHandle.CombineDependencies(Dependency, rockOccupantsHandle);
         var ecb = m_ecb.CreateCommandBuffer().AsParallelWriter();
         
         Entities
             .WithName("farmer_movement")
             .WithAll<Farmer, Path>()
-			.WithDisposeOnCompletion(rockLocations)
-			.WithDisposeOnCompletion(rockOccupants)
-			.WithDisposeOnCompletion(rockEntities)
+            .WithReadOnly(sectionRefBuffer)
+            .WithReadOnly(tileBufferMap)
 			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, in LocalToWorld ltw) =>
             {
                 if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1 &&
@@ -79,7 +75,15 @@ public class FarmerMovementSystem : SystemBase
                             ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
-                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, ref rockOccupants, nextLocation, ref ecb, entityInQueryIndex))
+                    int2 nextPosInt2 = new int2((int) nextLocation.x, (int) nextLocation.z);
+                    
+                    int sectionRefId = grid.GetSectionId(nextPosInt2);
+                    int tileIndex = grid.GetTileIndex(nextPosInt2);
+                    Entity sectionEntity = sectionRefBuffer[gridEntity][sectionRefId].SectionEntity;
+                    DynamicBuffer<GridTile> tileBuffer = tileBufferMap[sectionEntity];
+                    GridTile tile = tileBuffer[tileIndex];
+
+                    if (tile.OccupationType == OccupationType.Rock)
                     {
                         ecb.RemoveComponent<WorkerIntent_None>(entityInQueryIndex, entity);
                         
@@ -87,6 +91,7 @@ public class FarmerMovementSystem : SystemBase
                         {
                             ecb.AddComponent(entityInQueryIndex, entity, new WorkerIntent_Break());
 							path.sourcePosition = ltw.Position;
+                            ecb.AddComponent(entityInQueryIndex, tile.OccupyingEntity, new WorkerIntent_Break());
                         }
                     }
                     else
@@ -121,36 +126,4 @@ public class FarmerMovementSystem : SystemBase
 		
 		m_ecb.AddJobHandleForProducer(Dependency);
 	}
-
-    
-}
-
-public class FarmerUtils
-{
-    public static bool IsObstructionPresent(ref NativeArray<Entity> entities, ref NativeArray<LocalToWorld> locations, 
-        ref NativeArray<GridOccupant> occupants, float3 position, ref EntityCommandBuffer.ParallelWriter ecb, int entityInQueryIndex)
-    {
-        for (int i = 0; i < entities.Length; i++)
-        {
-            LocalToWorld location = locations[i];
-            GridOccupant occupant = occupants[i];
-            float4 bounds;
-            
-            bounds.w = location.Position.x;
-            bounds.x = location.Position.x + occupant.GridSize.x;
-            bounds.y = location.Position.z;
-            bounds.z = location.Position.z + occupant.GridSize.y;
-            
-            if (bounds.w <= position.x && 
-                position.x <= bounds.x && 
-                bounds.y <= position.z && 
-                position.z <= bounds.z)
-            {
-                ecb.AddComponent(entityInQueryIndex, entities[i], new WorkerIntent_Break());
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
