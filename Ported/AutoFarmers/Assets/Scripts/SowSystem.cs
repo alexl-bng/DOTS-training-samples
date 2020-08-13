@@ -6,8 +6,18 @@ using Unity.Transforms;
 
 public class SowSystem_PathComplete : SystemBase
 {
+	private EntityQuery m_gridQuery;
+
+	protected override void OnCreate()
+	{		
+		m_gridQuery = EntityManager.CreateEntityQuery(typeof(Grid));
+	}
+
 	protected override void OnUpdate()
 	{
+		int numGrids = m_gridQuery.CalculateEntityCount();
+		if (numGrids == 0) return;
+
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
@@ -34,7 +44,7 @@ public class SowSystem_PathComplete : SystemBase
 			ecb.SetComponent(newPlantEntity, new Translation { Value = new float3(plow.TargetTilePos.x, 0.0f, plow.TargetTilePos.y) });
 			ecb.AddComponent<PlantStateGrowing>(newPlantEntity);
 			ecb.SetComponent(newPlantEntity, new PlantStateGrowing { GrowthProgress = 0.1f });
-			
+			//ecb.AddComponent(newPlantEntity, 
 			//tile.IsPlowed = true;
 			//tile.RenderTileDirty = true;
 			tileBuffer[tileIndex] = tile;

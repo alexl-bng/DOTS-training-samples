@@ -7,6 +7,7 @@ using Unity.Jobs;
 public class DetermineIntentSystem_Farmer : SystemBase
 {
 	private EntityQuery m_plantQuery;
+	private EntityQuery m_gridQuery;
 
 	protected override void OnCreate()
 	{
@@ -18,11 +19,24 @@ public class DetermineIntentSystem_Farmer : SystemBase
 				ComponentType.ReadOnly<Translation>()
 			}
 		});
+
+
+		m_gridQuery = GetEntityQuery(new EntityQueryDesc
+		{
+			All = new[]
+			{
+				ComponentType.ReadOnly<Grid>()
+			}
+		});
+
+
 	}
 
 
 	protected override void OnUpdate()
 	{
+		int numGrids = m_gridQuery.CalculateEntityCount();
+		if (numGrids == 0) return;
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
@@ -220,7 +234,7 @@ class WorkerIntentUtils
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
 			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
-			foundTile = !tile.IsPlowed;
+			foundTile = !tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
 		} while (!foundTile && tries>0);
 
 		if (foundTile)

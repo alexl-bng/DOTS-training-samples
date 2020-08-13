@@ -6,13 +6,19 @@ using Unity.Transforms;
 
 public class PlowSystem_PathComplete : SystemBase
 {
+	private EntityQuery m_gridQuery;
+
 	protected override void OnCreate()
 	{
 		Enabled = false;
+		m_gridQuery = EntityManager.CreateEntityQuery(typeof(Grid));
 	}
 
 	protected override void OnUpdate()
 	{
+		int numGrids = m_gridQuery.CalculateEntityCount();
+		if (numGrids == 0) return;
+
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
@@ -49,12 +55,19 @@ public class PlowSystem_PathComplete : SystemBase
 
 public class PlowSystem_DistanceCheck : SystemBase
 {
+	private EntityQuery m_gridQuery;
+
 	protected override void OnCreate()
 	{
 		Enabled = true;
+		m_gridQuery = EntityManager.CreateEntityQuery(typeof(Grid));
 	}
+
 	protected override void OnUpdate()
 	{
+		int numGrids = m_gridQuery.CalculateEntityCount();
+		if (numGrids == 0) return;
+
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
