@@ -70,8 +70,68 @@ public class WorldGeneratorSystem : SystemBase
 				}
 			}
 
-			// TODO: rocks
+			int rockAttempts = worldGen.RockAttempts;
+			while (rockAttempts > 0)
+			{
+				int2 tryLocation = new int2(rng.rng.NextInt(0, gridDims.x), rng.rng.NextInt(0, gridDims.y));
 
+				bool isValidPlacement = true;
+
+				int sizeX = rng.rng.NextInt(worldGen.RockSizeMin.x, worldGen.RockSizeMax.x);
+				int sizeZ = rng.rng.NextInt(worldGen.RockSizeMin.y, worldGen.RockSizeMax.y);
+
+				sizeX = math.min(sizeX, gridDims.x - tryLocation.x);
+				sizeZ = math.min(sizeZ, gridDims.y - tryLocation.y);
+
+				for (int testX = tryLocation.x; testX < tryLocation.x + sizeX; testX++)
+				{
+					for (int testZ = tryLocation.y; testZ < tryLocation.y + sizeZ; testZ++)
+					{
+						if (usedTiles.Contains(new int2(testX, testZ)))
+						{
+							isValidPlacement = false;
+						}
+					}
+				}
+
+				if (isValidPlacement)
+				{
+					Entity rockEntity = ecb.Instantiate(worldGen.RockPrefab);
+
+					float3 worldScale = new float3(sizeX - 0.25f, 0.5f, sizeZ - 0.25f) * grid.WorldScale;
+					ecb.AddComponent(rockEntity, new NonUniformScale
+					{
+						Value = worldScale
+					});
+
+					float3 worldPosition = new float3(tryLocation.x + sizeX * 0.5f - 0.5f, 0.25f, tryLocation.y + sizeZ * 0.5f - 0.5f);
+					ecb.SetComponent(rockEntity, new Translation
+					{
+						Value = worldPosition
+					});
+
+					ecb.SetComponent(rockEntity, new GridOccupant
+					{
+						OccupationType = OccupationType.Rock,
+						GridSize = new int2(sizeX, sizeZ)
+					});
+
+					ecb.AddComponent(rockEntity, new GridLocation
+					{
+						Value = tryLocation
+					});
+
+					for (int testX = tryLocation.x; testX < tryLocation.x + sizeX; testX++)
+					{
+						for (int testZ = tryLocation.y; testZ < tryLocation.y + sizeZ; testZ++)
+						{
+							usedTiles.Add(new int2(testX, testZ));
+						}
+					}
+				}
+
+				rockAttempts--;
+			}
 
 			for (int plowedTileIndex = 0; plowedTileIndex < worldGen.PlowedTileTargetCount; plowedTileIndex++)
 			{
