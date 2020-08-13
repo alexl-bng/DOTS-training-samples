@@ -6,4 +6,6 @@ public struct WorkerConfig : IComponentData
 {
 	public Entity FarmerPrefab;
 	public Entity DronePrefab;
+	public int MaxFarmerCount;
+	public int MaxDroneCount;
 }

@@ -5,10 +5,28 @@ using Unity.Transforms;
 public class WorkerSpawnSystem : SystemBase
 {
 	private EntityCommandBufferSystem m_CommandBufferSystem;
+	private EntityQuery m_FarmerQuery;
+	private EntityQuery m_DroneQuery;
 
 	protected override void OnCreate()
 	{
 		m_CommandBufferSystem = World.GetExistingSystem<EndSimulationEntityCommandBufferSystem>();
+
+		m_FarmerQuery = GetEntityQuery(new EntityQueryDesc
+		{
+			All = new[]
+			{
+				ComponentType.ReadOnly<Farmer>(),
+			}
+		});
+
+		m_DroneQuery = GetEntityQuery(new EntityQueryDesc
+		{
+			All = new[]
+			{
+				ComponentType.ReadOnly<Drone>(),
+			}
+		});
 	}
 
 	protected override void OnUpdate()
@@ -21,7 +39,12 @@ public class WorkerSpawnSystem : SystemBase
 
 		if (gameState.PlantSold)
 		{
-			if (resourceManager.FarmerCoins >= resourceManager.FarmerPrice)
+			// get farmer and drone counts
+			int currentFarmerCount = m_FarmerQuery.CalculateEntityCount();
+			int currentDroneCount = m_DroneQuery.CalculateEntityCount();
+
+			if (resourceManager.FarmerCoins >= resourceManager.FarmerPrice &&
+				currentFarmerCount < workerConfig.MaxFarmerCount)
 			{
 				Entity newFarmerEntity = entityCommandBuffer.Instantiate(workerConfig.FarmerPrefab);
 				entityCommandBuffer.SetComponent(newFarmerEntity, new Translation
@@ -32,7 +55,8 @@ public class WorkerSpawnSystem : SystemBase
 				resourceManager.FarmerCoins -= resourceManager.FarmerPrice;
 			}
 
-			if (resourceManager.DroneCoins >= resourceManager.DronePrice)
+			if (resourceManager.DroneCoins >= resourceManager.DronePrice &&
+				currentDroneCount < workerConfig.MaxDroneCount)
 			{
 				Entity newDroneEntity = entityCommandBuffer.Instantiate(workerConfig.DronePrefab);
 				entityCommandBuffer.SetComponent(newDroneEntity, new Translation
