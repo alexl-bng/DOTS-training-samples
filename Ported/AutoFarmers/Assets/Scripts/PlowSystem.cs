@@ -32,10 +32,12 @@ public class PlowSystem : SystemBase
 				DynamicBuffer<GridTile> tileBuffer = tileBufferMap[sectionEntity];
 				GridTile tile = tileBuffer[tileIndex];
 				tile.IsPlowed = true;
+				tile.RenderTileDirty = true;
 				tileBuffer[tileIndex] = tile;
 				ecb.RemoveComponent<WorkerIntent_Plow>(entity);
 				ecb.AddComponent<WorkerIntent_None>(entity);
-				
+				ecb.AddComponent<GridSectionDirty>(sectionEntity);
+
 			}
 			
 		}).Schedule();
