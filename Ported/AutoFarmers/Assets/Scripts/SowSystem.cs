@@ -38,19 +38,15 @@ public class SowSystem_PathComplete : SystemBase
 			Entity sectionEntity = sectionRefBuffer[gridEntity][sectionRefId].SectionEntity;
 			DynamicBuffer<GridTile> tileBuffer = tileBufferMap[sectionEntity];
 			GridTile tile = tileBuffer[tileIndex];
-			//UnityEngine.Debug.Log("Sown!");
 			Entity newPlantEntity = ecb.Instantiate(config.PlantPrefab);
 			ecb.AddComponent(newPlantEntity, new Plant());
 			ecb.SetComponent(newPlantEntity, new Translation { Value = new float3(plow.TargetTilePos.x, 0.0f, plow.TargetTilePos.y) });
 			ecb.AddComponent<PlantStateGrowing>(newPlantEntity);
 			ecb.SetComponent(newPlantEntity, new PlantStateGrowing { GrowthProgress = 0.1f });
-			//ecb.AddComponent(newPlantEntity, 
-			//tile.IsPlowed = true;
-			//tile.RenderTileDirty = true;
+			ecb.AddComponent(newPlantEntity, new GridLocation { Value = plow.TargetTilePos });
 			tileBuffer[tileIndex] = tile;
 			ecb.RemoveComponent<WorkerIntent_Sow>(entity);
 			ecb.AddComponent<WorkerIntent_None>(entity);
-			//? ecb.AddComponent<GridSectionDirty>(sectionEntity);
 			ecb.RemoveComponent<PathComplete>(entity);
 		}).Schedule();
 
