@@ -127,14 +127,24 @@ public class PlantHarvestSystem : SystemBase
 			.WithAll<PathComplete>()
 			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_Harvest harvestIntent) =>
 			{
-				// update plant state
-				entityCommandBuffer.RemoveComponent<PlantStateGrown>(entityInQueryIndex, harvestIntent.PlantEntity);
-				entityCommandBuffer.AddComponent<PlantStateCarried>(entityInQueryIndex, harvestIntent.PlantEntity);
+				if (harvestIntent.PlantEntity != Entity.Null)
+				{
+					// update plant state
+					entityCommandBuffer.RemoveComponent<GridLocation>(entityInQueryIndex, harvestIntent.PlantEntity);
+					entityCommandBuffer.AddComponent<PlantStateCarried>(entityInQueryIndex, harvestIntent.PlantEntity);
 
-				// update worker state
-				entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
-				entityCommandBuffer.RemoveComponent<WorkerIntent_Harvest>(entityInQueryIndex, entity);
-				entityCommandBuffer.AddComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
+					// update worker state
+					entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
+					entityCommandBuffer.RemoveComponent<WorkerIntent_Harvest>(entityInQueryIndex, entity);
+					entityCommandBuffer.AddComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
+					entityCommandBuffer.SetComponent(entityInQueryIndex, entity, new WorkerIntent_Sell { PlantEntity = harvestIntent.PlantEntity });
+				}
+				else
+				{
+					entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
+					entityCommandBuffer.RemoveComponent<WorkerIntent_Harvest>(entityInQueryIndex, entity);
+					entityCommandBuffer.AddComponent<WorkerIntent_None>(entityInQueryIndex, entity);
+				}
 
 			}).ScheduleParallel();
 
@@ -153,10 +163,8 @@ public class PlantSellSystem : SystemBase
 
 	protected override void OnUpdate()
 	{
-		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
-		PlantConfig plantConfig = GetSingleton<PlantConfig>();
-		GameState gameState = GetSingleton<GameState>();
-		ResourceManager resourceManager = GetSingleton<ResourceManager>();
+		var entityCommandBuffer = m_CommandBufferSystem.CreateCommandBuffer();
+		Entity gameStateEntity = GetSingletonEntity<GameState>();
 
 		Entities
 			.WithName("Plant_Sell")
@@ -164,19 +172,25 @@ public class PlantSellSystem : SystemBase
 			.ForEach((int entityInQueryIndex, Entity entity, ref WorkerIntent_Sell sellIntent, ref Path path) =>
 			{
 				// update game state
-				gameState.LastStorePosition = path.targetPosition;
-				gameState.PlantSold = true;
+				entityCommandBuffer.SetComponent(gameStateEntity, new GameState {
+					LastStorePosition = path.targetPosition,
+					PlantSold = true,
+				});
+
+				// update resources
+				ResourceManager resourceManager = EntityManager.GetComponentData<ResourceManager>(gameStateEntity);
 				resourceManager.FarmerCoins++;
 				resourceManager.DroneCoins++;
+				entityCommandBuffer.SetComponent(gameStateEntity, resourceManager);
 
 				// update plant state
-				entityCommandBuffer.RemoveComponent<PlantStateCarried>(entityInQueryIndex, sellIntent.PlantEntity);
-				entityCommandBuffer.AddComponent<PlantStateWarpingOut>(entityInQueryIndex, sellIntent.PlantEntity);
+				entityCommandBuffer.RemoveComponent<PlantStateCarried>(sellIntent.PlantEntity);
+				entityCommandBuffer.AddComponent<PlantStateWarpingOut>(sellIntent.PlantEntity);
 
 				// update worker state
-				entityCommandBuffer.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
-				entityCommandBuffer.RemoveComponent<WorkerIntent_Sell>(entityInQueryIndex, entity);
-				entityCommandBuffer.AddComponent<WorkerIntent_None>(entityInQueryIndex, entity);
+				entityCommandBuffer.RemoveComponent<PathComplete>(entity);
+				entityCommandBuffer.RemoveComponent<WorkerIntent_Sell>(entity);
+				entityCommandBuffer.AddComponent<WorkerIntent_None>(entity);
 
 			}).Run();
 

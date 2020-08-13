@@ -36,6 +36,7 @@ public class WorkerSpawnSystem : SystemBase
 		WorkerConfig workerConfig = GetSingleton<WorkerConfig>();
 		GameState gameState = GetSingleton<GameState>();
 		ResourceManager resourceManager = GetSingleton<ResourceManager>();
+		Entity resourceManagerEntity = GetSingletonEntity<ResourceManager>();
 
 		if (gameState.PlantSold)
 		{
@@ -66,9 +67,11 @@ public class WorkerSpawnSystem : SystemBase
 
 				resourceManager.DroneCoins -= resourceManager.DronePrice;
 			}
-		}
 
-		gameState.PlantSold = false;
+			entityCommandBuffer.SetComponent(resourceManagerEntity, resourceManager);
+			gameState.PlantSold = false;
+			entityCommandBuffer.SetComponent(resourceManagerEntity, gameState);
+		}
 
 		m_CommandBufferSystem.AddJobHandleForProducer(Dependency);
 	}

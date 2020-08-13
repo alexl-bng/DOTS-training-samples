@@ -16,6 +16,7 @@ public class DetermineIntentSystem_Farmer : SystemBase
 			All = new[]
 			{
 				ComponentType.ReadOnly<Plant>(),
+				ComponentType.ReadOnly<PlantStateGrown>(),
 				ComponentType.ReadOnly<Translation>()
 			}
 		});
@@ -133,8 +134,8 @@ class WorkerIntentUtils
 {
 	public static bool SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity, NativeArray<Translation> plantTranslations, NativeArray<Entity> plantEntities)
 	{
-		return false;
-		if (plantEntities.Length == 0)
+		//return false;
+		if (plantEntities.Length == 0 || plantEntities[0] == Entity.Null)
 		{
 			return false;
 		}
@@ -143,6 +144,7 @@ class WorkerIntentUtils
 		//tjtj: would this be better? AddComponent<WorkerIntent_Harvest>(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
 		ecb.AddComponent<WorkerIntent_Harvest>(entity);
 		ecb.SetComponent(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
+		ecb.RemoveComponent<PlantStateGrown>(plantEntities[0]);
 		return true;
 	}
 
