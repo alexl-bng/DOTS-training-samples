@@ -119,6 +119,7 @@ class WorkerIntentUtils
 {
 	public static bool SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity, NativeArray<Translation> plantTranslations, NativeArray<Entity> plantEntities)
 	{
+		return false;
 		if (plantEntities.Length == 0)
 		{
 			return false;
@@ -150,7 +151,6 @@ class WorkerIntentUtils
 		RandomNumberGenerator rng,
 		ref Path path)
 	{
-		return false;
 		int2 worldDim = grid.GetWorldDimensions();
 
 		int tries = 10;
@@ -166,8 +166,8 @@ class WorkerIntentUtils
 			y = rng.rng.NextInt(0, worldDim.y);
 			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
 			foundTile = tile.IsPlowed;
-			if (foundTile)			
-				UnityEngine.Debug.Log("Sowing!");
+			//if (foundTile)			
+			//	UnityEngine.Debug.Log("Sowing!");
 			} while (!foundTile && tries > 0);
 
 		if (foundTile)
