@@ -42,10 +42,10 @@ public class FarmerMovementSystem : SystemBase
             .WithAll<Farmer, Path>()
             .WithReadOnly(sectionRefBuffer)
             .WithReadOnly(tileBufferMap)
-			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, in LocalToWorld ltw) =>
+			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, in Translation translation) =>
             {
-                if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1 &&
-                    math.abs(path.targetPosition.z - ltw.Position.z) < 0.1)
+                if (math.abs(path.targetPosition.x - translation.Value.x) < 0.1 &&
+                    math.abs(path.targetPosition.z - translation.Value.z) < 0.1)
                 {
                     if (!HasComponent<PathComplete>(entity))
                     {
@@ -60,19 +60,19 @@ public class FarmerMovementSystem : SystemBase
                     }
 
                     // TODO: account for smoothing
-                    Vector3 nextLocation = ltw.Position;
+                    float3 nextLocation = translation.Value;
                     
                     // TODO: account for grid bounds
-                    if (math.abs(path.targetPosition.x - ltw.Position.x) > 0.1)
+                    if (math.abs(path.targetPosition.x - translation.Value.x) > 0.1)
                     {    // move along X
                         nextLocation =
-                            ltw.Position + new float3((path.targetPosition.x > ltw.Position.x ? 1f : -1f) * (deltaTime * path.speed)
+                            translation.Value + new float3((path.targetPosition.x > translation.Value.x ? 1f : -1f) * (deltaTime * path.speed)
                                 , 0, 0);
                     }
-                    else if (math.abs(path.targetPosition.z - ltw.Position.z) > 0.1) 
+                    else if (math.abs(path.targetPosition.z - translation.Value.z) > 0.1) 
                     {    // move along Z
                         nextLocation =
-                            ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
+                            translation.Value + new float3(0, 0, (path.targetPosition.z > translation.Value.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
                     int2 nextPosInt2 = new int2((int) nextLocation.x, (int) nextLocation.z);
@@ -90,7 +90,7 @@ public class FarmerMovementSystem : SystemBase
                         if (!HasComponent<WorkerIntent_Break>(entity))
                         {
                             ecb.AddComponent(entityInQueryIndex, entity, new WorkerIntent_Break());
-							path.sourcePosition = ltw.Position;
+							path.sourcePosition = translation.Value;
                             ecb.AddComponent(entityInQueryIndex, tile.OccupyingEntity, new WorkerIntent_Break());
                         }
                     }
@@ -115,11 +115,11 @@ public class FarmerMovementSystem : SystemBase
                     var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
                     path.progress = distanceFromSource < 0.1f
                         ? 100.0f
-                        : ((math.distance(ltw.Position, path.targetPosition) / distanceFromSource) * 100.0f);
+                        : ((math.distance(translation.Value, path.targetPosition) / distanceFromSource) * 100.0f);
                 }
                 
                 // draw a straight line from the current position to the target
-                Debug.DrawLine(new Vector3(ltw.Position.x, 0.1f, ltw.Position.z),
+                Debug.DrawLine(new Vector3(translation.Value.x, 0.1f, translation.Value.z),
                     new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
             }
         ).ScheduleParallel();
