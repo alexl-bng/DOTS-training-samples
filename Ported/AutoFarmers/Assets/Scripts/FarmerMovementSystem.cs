@@ -74,10 +74,14 @@ public class FarmerMovementSystem : SystemBase
                             ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
-                    if (FarmerUtils.IsObstructionPresent(rockEntities, rockLocations, nextLocation, ref ecb))//, out Entity rockEntity))
+                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, nextLocation, ref ecb))
                     {
                         ecb.RemoveComponent<WorkerIntent_None>(entity);
-                        ecb.AddComponent(entity, new WorkerIntent_Break());
+                        
+                        if (!HasComponent<WorkerIntent_Break>(entity))
+                        {
+                            ecb.AddComponent(entity, new WorkerIntent_Break());
+                        }
                     }
                     else
                     {
@@ -113,14 +117,14 @@ public class FarmerMovementSystem : SystemBase
 
 public class FarmerUtils
 {
-    public static bool IsObstructionPresent(NativeArray<Entity> entities, NativeArray<LocalToWorld> locations, float3 position, ref EntityCommandBuffer ecb)
+    public static bool IsObstructionPresent(ref NativeArray<Entity> entities, ref NativeArray<LocalToWorld> locations, float3 position, ref EntityCommandBuffer ecb)
     {
         for (int i = 0; i < entities.Length; i++)
         {
             LocalToWorld location = locations[i];
             
-            if (math.abs(location.Position.x - position.x) < 0.01 &&
-                math.abs(location.Position.z - position.z) < 0.01)
+            if (math.abs(location.Position.x - position.x) < 0.5 &&
+                math.abs(location.Position.z - position.z) < 0.5)
             {
                 ecb.AddComponent(entities[i], new WorkerIntent_Break());
                 return true;
