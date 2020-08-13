@@ -47,10 +47,12 @@ public class FarmerMovementSystem : SystemBase
                 if (math.abs(path.targetPosition.x - translation.Value.x) < 0.1 &&
                     math.abs(path.targetPosition.z - translation.Value.z) < 0.1)
                 {
-                    if (!HasComponent<PathComplete>(entity))
+                    if (!HasComponent<PathComplete>(entity) &&
+						!HasComponent<NoMovement>(entity))
                     {
                         ecb.AddComponent(entityInQueryIndex, entity, new PathComplete());
-                    }
+						ecb.AddComponent(entityInQueryIndex, entity, new NoMovement());
+					}
                 }
                 else
                 {
@@ -59,8 +61,13 @@ public class FarmerMovementSystem : SystemBase
                         ecb.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
                     }
 
-                    // TODO: account for smoothing
-                    float3 nextLocation = translation.Value;
+					if (HasComponent<NoMovement>(entity))
+					{
+						ecb.RemoveComponent<NoMovement>(entityInQueryIndex, entity);
+					}
+
+					// TODO: account for smoothing
+					float3 nextLocation = translation.Value;
                     
                     // TODO: account for grid bounds
                     if (math.abs(path.targetPosition.x - translation.Value.x) > 0.1)
