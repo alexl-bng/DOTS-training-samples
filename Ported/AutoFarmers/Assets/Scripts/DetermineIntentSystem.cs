@@ -46,9 +46,6 @@ public class DetermineIntentSystem_Farmer : SystemBase
 		BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>();
 		BufferFromEntity<GridTile> tileBuffer = GetBufferFromEntity<GridTile>();
 
-		//tjtj: does the query actually have to ask for the data I ask for here? I guess it wouldn't make sense to not have it...
-		//tjtj: why does this need to be TempJob instead of Temp? I saw other code that it worked with (using Run() though)
-		//tjrj: Are these basically just kicking off jobs and the handles are the wait handles? Presumably the native arrays will be bullshit until the handle is complete?
 		NativeArray<Translation> plantTranslations = m_plantQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out JobHandle plantTranslationHandle);
 		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArrayAsync(Allocator.TempJob, out JobHandle plantEntitiesHandle);
 
@@ -88,12 +85,11 @@ public class DetermineIntentSystem_Farmer : SystemBase
 			}
 			
 		}).Schedule(Dependency);
-
+		
 		Dependency = foreachHandle;
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
 	}
-
 }
 
 
@@ -166,7 +162,6 @@ class WorkerIntentUtils
 		}
 		//reserve?
 
-		//tjtj: would this be better? AddComponent<WorkerIntent_Harvest>(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
 		ecb.AddComponent<WorkerIntent_Harvest>(entity);
 		ecb.SetComponent(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
 		ecb.RemoveComponent<PlantStateGrown>(plantEntities[0]);
@@ -201,14 +196,11 @@ class WorkerIntentUtils
 		int y;
 		do
 		{
-			//UnityEngine.Debug.Log(string.Format("Tries: {0}", tries));
 			tries--;
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
 			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
 			foundTile = tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
-			//if (foundTile)			
-			//	UnityEngine.Debug.Log("Sowing!");
 			} while (!foundTile && tries > 0);
 
 		if (foundTile)
@@ -224,7 +216,6 @@ class WorkerIntentUtils
 		}
 		else
 		{
-			//UnityEngine.Debug.Log(string.Format("Failed to get target tile"));
 			return false;
 		}
 
@@ -256,7 +247,6 @@ class WorkerIntentUtils
 		int y;
 		do
 		{
-			//UnityEngine.Debug.Log(string.Format("Tries: {0}", tries));
 			tries--;
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
@@ -277,7 +267,6 @@ class WorkerIntentUtils
 		}
 		else
 		{
-			//UnityEngine.Debug.Log(string.Format("Failed to get target tile"));
 			return false;
 		}
 
