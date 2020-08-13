@@ -39,7 +39,7 @@ public class GridOccupantSystem : SystemBase
 				for (int gridZ = gridMin.y; gridZ < gridMax.y; gridZ++)
 				{
 					int sectionIndex = grid.GetSectionId(new int2(gridX, gridZ));
-					int tileIndex = grid.GetSectionId(new int2(gridX, gridZ));
+					int tileIndex = grid.GetTileIndex(new int2(gridX, gridZ));
 					Entity sectionEntity = sectionRefs[sectionIndex].SectionEntity;
 
 					DynamicBuffer<GridTile> tileBuffer = tileBuffers[sectionEntity];
@@ -72,7 +72,7 @@ public class GridOccupantSystem : SystemBase
 			    for (int gridZ = gridMin.y; gridZ < gridMax.y; gridZ++)
 			    {
 				    int sectionIndex = grid.GetSectionId(new int2(gridX, gridZ));
-				    int tileIndex = grid.GetSectionId(new int2(gridX, gridZ));
+				    int tileIndex = grid.GetTileIndex(new int2(gridX, gridZ));
 				    Entity sectionEntity = sectionRefs[sectionIndex].SectionEntity;
 
 				    DynamicBuffer<GridTile> tileBuffer = tileBuffers[sectionEntity];
