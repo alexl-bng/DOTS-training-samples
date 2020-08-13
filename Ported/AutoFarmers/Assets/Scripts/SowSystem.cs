@@ -15,6 +15,7 @@ public class SowSystem_PathComplete : SystemBase
 		Entity gridEntity = GetSingletonEntity<Grid>();
 		BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>();
 		BufferFromEntity<GridTile> tileBufferMap = GetBufferFromEntity<GridTile>();
+		PlantConfig config = GetSingleton<PlantConfig>();
 
 		Entities
 			.WithAll<PathComplete>()
@@ -27,7 +28,13 @@ public class SowSystem_PathComplete : SystemBase
 			Entity sectionEntity = sectionRefBuffer[gridEntity][sectionRefId].SectionEntity;
 			DynamicBuffer<GridTile> tileBuffer = tileBufferMap[sectionEntity];
 			GridTile tile = tileBuffer[tileIndex];
-			UnityEngine.Debug.Log("Sown!");
+			//UnityEngine.Debug.Log("Sown!");
+			Entity newPlantEntity = ecb.Instantiate(config.PlantPrefab);
+			ecb.AddComponent(newPlantEntity, new Plant());
+			ecb.SetComponent(newPlantEntity, new Translation { Value = new float3(plow.TargetTilePos.x, 0.0f, plow.TargetTilePos.y) });
+			ecb.AddComponent<PlantStateGrowing>(newPlantEntity);
+			ecb.SetComponent(newPlantEntity, new PlantStateGrowing { GrowthProgress = 0.1f });
+			
 			//tile.IsPlowed = true;
 			//tile.RenderTileDirty = true;
 			tileBuffer[tileIndex] = tile;
