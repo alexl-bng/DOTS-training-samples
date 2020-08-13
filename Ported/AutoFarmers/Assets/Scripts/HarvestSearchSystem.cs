@@ -46,10 +46,10 @@ public class HarvestSearchSystem : SystemBase
 		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArray(Allocator.TempJob);//, out JobHandle plantEntitiesHandle);		
 		NativeArray<Entity> workerEntities = m_workerQuery.ToEntityArray(Allocator.TempJob);//, out JobHandle workerEntitiesHandle);
 
-		if (plantEntities.Length == 0)
-		{
-			UnityEngine.Debug.Log("No plants");
-		}
+		//if (plantEntities.Length == 0)
+		//{
+		//	UnityEngine.Debug.Log("No plants");
+		//}
 
 		int workerCount = workerEntities.Length;
 		int plantCount = plantEntities.Length;
@@ -57,7 +57,7 @@ public class HarvestSearchSystem : SystemBase
 		{
 			if (i < plantEntities.Length)
 			{
-				UnityEngine.Debug.Log("Assigning");
+				//UnityEngine.Debug.Log("Assigning");
 				ecb.AddComponent(workerEntities[i], new WorkerIntent_Harvest { PlantEntity = plantEntities[i] });
 				ecb.RemoveComponent<PlantStateGrown>(plantEntities[i]);
 			}
