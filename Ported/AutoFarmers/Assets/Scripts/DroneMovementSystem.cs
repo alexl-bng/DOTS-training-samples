@@ -22,13 +22,12 @@ public class DroneMovementSystem : SystemBase
         Entities
             .WithName("drone_movement")
             .WithAll<Drone, Path>()
-            .WithoutBurst()
             .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
                 {
                     // Drones make a direct bee line to their target
                     // TODO: account for smoothing
-                    if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.01 &&
-                        math.abs(path.targetPosition.z - ltw.Position.z) < 0.01)
+                    if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1f &&
+                        math.abs(path.targetPosition.z - ltw.Position.z) < 0.1f)
                     {
                         if (!HasComponent<PathComplete>(entity))
                         {
@@ -37,18 +36,25 @@ public class DroneMovementSystem : SystemBase
                     }
                     else
                     {
+                        if (HasComponent<PathComplete>(entity))
+                        {
+                            ecb.RemoveComponent<PathComplete>(entity);
+                        }
+                        
                         ecb.AddComponent(entity,  new Translation()
                         {
                             Value = Vector3.MoveTowards(ltw.Position, path.targetPosition, path.speed * deltaTime)
                         });
 
-                        var distanceFromSource = Vector3.Distance(path.sourcePosition, path.targetPosition);
-                        path.progress = Vector3.Distance(ltw.Position, path.targetPosition) / distanceFromSource * 100.0f;
+                        var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
+                        path.progress = math.distance(ltw.Position, path.targetPosition) / distanceFromSource * 100.0f;
                         
                         // draw a straight line from the current position to the target
                         Debug.DrawLine(new Vector3(ltw.Position.x, 0.1f, ltw.Position.z),
                             new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
                     }
-                }).Run();
+                }).Schedule();
+        
+        m_ecb.AddJobHandleForProducer(Dependency);
     }
 }

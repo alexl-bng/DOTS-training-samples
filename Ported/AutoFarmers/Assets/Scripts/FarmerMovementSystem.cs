@@ -42,9 +42,6 @@ public class FarmerMovementSystem : SystemBase
         Entities
             .WithName("farmer_movement")
             .WithAll<Farmer, Path>()
-            //.WithDisposeOnCompletion(rockTranslations)
-            //.WithDisposeOnCompletion(rockScales)
-            //.WithDisposeOnCompletion(rockEntities)
             .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
             {
                 if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1 &&
@@ -85,6 +82,7 @@ public class FarmerMovementSystem : SystemBase
                         if (!HasComponent<WorkerIntent_Break>(entity))
                         {
                             ecb.AddComponent(entity, new WorkerIntent_Break());
+                            path.sourcePosition = ltw.Position;
                         }
                     }
                     else
@@ -92,6 +90,11 @@ public class FarmerMovementSystem : SystemBase
                         if (HasComponent<WorkerIntent_Break>(entity))
                         {
                             ecb.RemoveComponent<WorkerIntent_Break>(entity);
+                            
+                            ecb.SetComponent(entity, new Translation()
+                            {
+                                Value = path.sourcePosition
+                            });
                         }
                         
                         ecb.SetComponent(entity, new Translation()
@@ -132,11 +135,14 @@ public class FarmerUtils
             float4 bounds;
             
             bounds.w = location.Position.x;
-            bounds.x = location.Position.x + occupant.GridSize.y;
+            bounds.x = location.Position.x + occupant.GridSize.x;
             bounds.y = location.Position.z;
-            bounds.z = location.Position.x + occupant.GridSize.x;
+            bounds.z = location.Position.z + occupant.GridSize.y;
             
-            if (bounds.w <= position.x && position.x <= bounds.x && bounds.y <= position.z && position.z <= bounds.z)
+            if (bounds.w <= position.x && 
+                position.x <= bounds.x && 
+                bounds.y <= position.z && 
+                position.z <= bounds.z)
             {
                 ecb.AddComponent(entities[i], new WorkerIntent_Break());
                 return true;

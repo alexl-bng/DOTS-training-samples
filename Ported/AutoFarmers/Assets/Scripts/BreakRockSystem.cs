@@ -20,7 +20,8 @@ public class BreakRockSystem : SystemBase
     {
         var ecb = m_ecb.CreateCommandBuffer();
         float breakRate = 0.05f;
-        float timeDelta = Time.DeltaTime;
+        float deltaTime = Time.DeltaTime;
+        double time = Time.ElapsedTime;
         
         Entities.
             WithAll<Rock, WorkerIntent_Break>().
@@ -28,7 +29,7 @@ public class BreakRockSystem : SystemBase
             {
                 if (rockData.health > 0)
                 {
-                    translation.Value.y -= ((float)(breakRate) * timeDelta);
+                    translation.Value.y -= ((float)(breakRate) * deltaTime);
                     rockData.health -= (breakRate);
                 }
                 else
@@ -44,14 +45,10 @@ public class BreakRockSystem : SystemBase
             .WithAll<Farmer, WorkerIntent_Break>()
             .ForEach((Entity entity, in Translation translation) =>
         {
-            ecb.SetComponent(entity, new Translation
+            ecb.SetComponent(entity, new Translation()
             {
-                Value = new float3(
-                    translation.Value.x + rng.NextFloat(-0.1f, 0.1f),
-                    translation.Value.y,
-                    translation.Value.z + rng.NextFloat(-0.1f, 0.1f))
-            }); // have the worker vibrate to imply that they are breaking a rock
-            // this will probably lead to an issue where the farmer is offset from their initial alignment
+                Value = new float3(translation.Value.x, translation.Value.y + ((float)(math.sin(time) * deltaTime) / 5.0f), translation.Value.z)
+            });
         }).Schedule();
         
         m_ecb.AddJobHandleForProducer(Dependency);
