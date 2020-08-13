@@ -3,6 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Jobs;
+using UnityEngine;
 
 public class DetermineIntentSystem_Farmer : SystemBase
 {
@@ -58,7 +59,8 @@ public class DetermineIntentSystem_Farmer : SystemBase
 			.ForEach((
 				Entity entity,
 				ref Path path,
-				ref RandomNumberGenerator rng) =>
+				ref RandomNumberGenerator rng,
+				in Translation workerTranslation) =>
 		{
 			//UnityEngine.Debug.Log("thinking...");
 			bool switchedToState = false;
@@ -75,7 +77,7 @@ public class DetermineIntentSystem_Farmer : SystemBase
 					break;
 				case 2:
 					//UnityEngine.Debug.Log("plowing...");
-					switchedToState = WorkerIntentUtils.SwitchToPlowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
+					switchedToState = WorkerIntentUtils.SwitchToPlowIntent(ecb, entity, workerTranslation, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 3:
 					//UnityEngine.Debug.Log("breaking...");
@@ -232,6 +234,7 @@ class WorkerIntentUtils
 	public static bool SwitchToPlowIntent(
 		EntityCommandBuffer ecb, 
 		Entity workerEntity,
+		Translation workerTranslation,
 		ref Grid grid, 
 		Entity gridEntity, 
 		ref BufferFromEntity<GridSectionReference> sectionRefBuffer, 
@@ -247,37 +250,113 @@ class WorkerIntentUtils
 
 		int2 worldDim = grid.GetWorldDimensions();
 
-		int tries = 10;
+		int fieldMinWidth = 2;
+		int fieldMinHeight = 2;
+		int fieldTargetWidth = rng.rng.NextInt(fieldMinWidth, 8);
+		int fieldTargetHeight = rng.rng.NextInt(fieldMinHeight, 8);
 
-		bool foundTile = false;
-		int x;
-		int y;
-		do
-		{
-			tries--;
-			x = rng.rng.NextInt(0, worldDim.x);
-			y = rng.rng.NextInt(0, worldDim.y);
-			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
-			foundTile = !tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
-		} while (!foundTile && tries>0);
+		bool fieldFound = false;
+		int2 baseLoc = new int2();
+		int2 fieldSize = new int2();
 
-		if (foundTile)
+		int2 workerGridLoc = new int2((int)math.floor(workerTranslation.Value.x), (int)math.floor(workerTranslation.Value.z));
+
+		int attempts = 10;
+		int sectionSearchRadius = 1;
+
+		while (!fieldFound && attempts > 0)
 		{
-			//reserve?
-			ecb.AddComponent<WorkerIntent_Plow>(workerEntity);
-			ecb.SetComponent(workerEntity, new WorkerIntent_Plow
+			attempts--;
+
+			int sectionId = -1;
+
+			for (int pickSectionAttempt = 0; pickSectionAttempt < 10; pickSectionAttempt++)
 			{
-				TargetTilePos = new int2(x, y)
+				int2 locOffset = grid.SectionDimensions * new int2(rng.rng.NextInt(-sectionSearchRadius, sectionSearchRadius + 1), rng.rng.NextInt(-sectionSearchRadius, sectionSearchRadius + 1));
+				if (grid.IsValidGridLocation(workerGridLoc + locOffset))
+				{
+					sectionId = grid.GetSectionId(workerGridLoc + locOffset);
+					break;
+				}
+			}
+
+			if (sectionId != -1)
+			{
+				Entity sectionEntity = sectionRefBuffer[gridEntity][sectionId].SectionEntity;
+				DynamicBuffer<GridTile> sectionTiles = tileBuffer[sectionEntity];
+
+				int bufferSize = sectionTiles.Length;
+
+				int searchStart = rng.rng.NextInt(0, bufferSize);
+				for (int tileOffset = 0; tileOffset < bufferSize; tileOffset++)
+				{
+					int tileIndex = (searchStart + tileOffset) % bufferSize;
+					GridTile tile = sectionTiles[tileIndex];
+
+					if (!tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied)
+					{
+						baseLoc = grid.GetGridLocationFromIndices(sectionId, tileIndex);
+
+						int fieldWidth = fieldTargetWidth;
+						int fieldHeight = fieldTargetHeight;
+
+						bool doExpand = true;
+
+						for (int expandX = 0; doExpand && expandX < fieldWidth; expandX++)
+						{
+							for (int expandZ = 0; doExpand && expandZ < fieldHeight; expandZ++)
+							{
+								int2 tileLoc = new int2(baseLoc.x + expandX, baseLoc.y + expandZ);
+
+								if (grid.IsValidGridLocation(tileLoc))
+								{
+									tile = GetTileAtPos(tileLoc.x, tileLoc.y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
+
+									if (tile.IsPlowed || tile.OccupationType != OccupationType.Unoccupied)
+									{
+										doExpand = false;
+
+										if (expandX >= fieldMinWidth)
+										{
+											fieldWidth = expandX;
+											fieldFound = true;
+										}
+									}
+								}
+							}
+						}
+
+						if (fieldFound)
+						{
+							fieldSize = new int2(fieldWidth, fieldHeight);
+						}
+
+						break;
+					}
+				}
+			}
+		}
+
+		if (fieldFound)
+		{
+			//ecb.AddComponent<WorkerIntent_Plow>(workerEntity);
+			ecb.AddComponent(workerEntity, new WorkerIntent_Plow
+			{
+				BaseLoc = baseLoc,
+				FieldSize = fieldSize,
+				CurrentIndex = 0
 			});
 
-			path.targetPosition = new float3(x, 0, y);
+			//Debug.Log($"plowing field with base loc {baseLoc} size {fieldSize}");
+
+			path.targetPosition = new float3(baseLoc.x, 0, baseLoc.y);
+
+			return true;
 		}
 		else
 		{
 			return false;
 		}
-
-		return true;
 	}
 
 

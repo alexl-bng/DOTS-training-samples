@@ -17,7 +17,9 @@ public struct WorkerIntent_Sow : IComponentData
 }
 public struct WorkerIntent_Plow : IComponentData
 {
-	public int2 TargetTilePos;
+	public int2 BaseLoc;
+	public int2 FieldSize;
+	public int CurrentIndex;
 }
 public struct WorkerIntent_Break : IComponentData { }
 

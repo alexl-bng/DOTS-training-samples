@@ -36,9 +36,27 @@ public struct Grid : IComponentData
 		return tileIndex;
 	}
 
+	public int2 GetGridLocationFromIndices(int sectionIndex, int tileIndex)
+	{
+		int2 sectionOffset = new int2(sectionIndex / SectionCount.y, sectionIndex % SectionCount.y) * SectionDimensions;
+		int2 tileOffset = new int2(tileIndex / SectionDimensions.y, tileIndex % SectionDimensions.y);
+
+		return sectionOffset + tileOffset;
+	}
+
 	public int2 GetTileDimensions()
 	{
 		return SectionDimensions * SectionCount;
+	}
+
+	public bool IsValidGridLocation(int2 gridLocation)
+	{
+		return gridLocation.x >= 0 && gridLocation.y >= 0 && gridLocation.x < SectionDimensions.x * SectionCount.x && gridLocation.y < SectionDimensions.y * SectionCount.y;
+	}
+
+	public bool IsValidSectionIndex(int sectionIndex)
+	{
+		return sectionIndex >= 0 && sectionIndex <= SectionCount.x * SectionCount.y;
 	}
 }
 
