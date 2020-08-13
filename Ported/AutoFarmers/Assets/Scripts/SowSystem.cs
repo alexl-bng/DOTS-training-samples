@@ -44,7 +44,6 @@ public class SowSystem_PathComplete : SystemBase
 			ecb.AddComponent<PlantStateGrowing>(newPlantEntity);
 			ecb.SetComponent(newPlantEntity, new PlantStateGrowing { GrowthProgress = 0.1f });
 			ecb.AddComponent(newPlantEntity, new GridLocation { Value = plow.TargetTilePos });
-			ecb.AddComponent(newPlantEntity, new GridOccupant { GridSize = new int2(1, 1), OccupationType = OccupationType.Plant });
 			tileBuffer[tileIndex] = tile;
 			ecb.RemoveComponent<WorkerIntent_Sow>(entity);
 			ecb.AddComponent<WorkerIntent_None>(entity);

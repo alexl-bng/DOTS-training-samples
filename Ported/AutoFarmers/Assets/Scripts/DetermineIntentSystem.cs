@@ -99,31 +99,56 @@ public class DetermineIntentSystem_Farmer : SystemBase
 
 public class DetermineIntentSystem_Drone: SystemBase
 {
+
+	private EntityQuery m_plantQuery;
+	private EntityQuery m_gridQuery;
+
+	protected override void OnCreate()
+	{
+		m_plantQuery = GetEntityQuery(new EntityQueryDesc
+		{
+			All = new[]
+			{
+				ComponentType.ReadOnly<Plant>(),
+				ComponentType.ReadOnly<Translation>()
+			}
+		});
+	}
+
 	protected override void OnUpdate()
 	{
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
-		Entities
+		NativeArray<Translation> plantTranslations = m_plantQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out JobHandle plantTranslationHandle);
+		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArrayAsync(Allocator.TempJob, out JobHandle plantEntitiesHandle);
+
+		Dependency = JobHandle.CombineDependencies(Dependency, plantTranslationHandle, plantEntitiesHandle);
+
+		JobHandle foreachHandle = Entities
 			.WithAll<Drone, WorkerIntent_None>()
+			.WithDisposeOnCompletion(plantTranslations)
+			.WithDisposeOnCompletion(plantEntities)
 			.ForEach((
-				Entity entity,				
+				Entity entity,
 				ref RandomNumberGenerator rng) =>
 			{
 				bool switchedToState = false;
-			int nextStateIndex = rng.rng.NextInt(0, 1);
-			switch (nextStateIndex)
-			{
-				case 0:
-					switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, new NativeArray<Translation>(), new NativeArray<Entity>());
-					break;				
+				int nextStateIndex = rng.rng.NextInt(0, 1);
+				switch (nextStateIndex)
+				{
+					case 0:
+						switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, plantTranslations, plantEntities);
+						break;
 
-			}
-			if (switchedToState)
-			{
-				ecb.RemoveComponent<WorkerIntent_None>(entity);
-			}
-		}).Schedule();
+				}
+				if (switchedToState)
+				{
+					ecb.RemoveComponent<WorkerIntent_None>(entity);
+				}
+			}).Schedule(Dependency);
+
+		Dependency = foreachHandle;
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
 	}
@@ -181,7 +206,7 @@ class WorkerIntentUtils
 			x = rng.rng.NextInt(0, worldDim.x);
 			y = rng.rng.NextInt(0, worldDim.y);
 			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
-			foundTile = tile.IsPlowed;
+			foundTile = tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
 			//if (foundTile)			
 			//	UnityEngine.Debug.Log("Sowing!");
 			} while (!foundTile && tries > 0);
