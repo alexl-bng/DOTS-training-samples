@@ -48,7 +48,7 @@ public class BreakRockSystem : SystemBase
             {
                 Value = new float3(
                     translation.Value.x + rng.NextFloat(-0.1f, 0.1f),
-                    translation.Value.y + rng.NextFloat(-0.1f, 0.1f),
+                    translation.Value.y,
                     translation.Value.z + rng.NextFloat(-0.1f, 0.1f))
             }); // have the worker vibrate to imply that they are breaking a rock
             // this will probably lead to an issue where the farmer is offset from their initial alignment
