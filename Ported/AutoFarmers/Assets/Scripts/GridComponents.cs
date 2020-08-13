@@ -21,8 +21,6 @@ public struct Grid : IComponentData
 		return new int2(SectionCount.x * SectionDimensions.x, SectionCount.y * SectionDimensions.y);
 	}
 
-	
-	
 	public int GetSectionId(int2 gridLocation)
 	{
 		int sectionX = gridLocation.x / SectionDimensions.x;
@@ -77,7 +75,7 @@ public enum OccupationType : uint
 }
 
 // TODO: define buffer to match sectionsize
-[InternalBufferCapacity(256)]
+[InternalBufferCapacity(441)]
 public struct GridTile : IBufferElementData
 {
 	public bool IsPlowed;

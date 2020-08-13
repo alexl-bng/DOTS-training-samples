@@ -35,8 +35,8 @@ public class RenderTileUpdateSystem : SystemBase
 				GridTile tile = tileBuffer[tileIndex];
 				if (tile.RenderTileDirty)
 				{
-					float4 color = tile.IsPlowed ? new float4(0.25f, 0.75f, 0.25f, 1) : new float4(1, 1, 1, 1);
-					ecb.SetComponent(tile.RenderTileEntity, new MeshColor{ Value = color });
+					float uv_offset = tile.IsPlowed ? 1.0f : 0.0f;
+					ecb.SetComponent(tile.RenderTileEntity, new MeshUVTransform { Value = uv_offset });
 
 					tile.RenderTileDirty = false;
 					tileBuffer[tileIndex] = tile;
