@@ -18,14 +18,14 @@ public class PlowSystem : SystemBase
 
 		Entities.ForEach((Entity entity, ref RandomNumberGenerator rng, in WorkerIntent_Plow plow, in Path path, in LocalToWorld ltw) =>
 		{
-			float3 diff = ltw.Position - new float3(plow.TargetTilePos.x, 0, plow.TargetTilePos.y);
-			//UnityEngine.Debug.Log(string.Format("{0} {1} {2} {3} {4}", math.length(diff), ltw.Position.x, ltw.Position.z, plow.TargetTilePos.x, plow.TargetTilePos.y));
+			float3 flattenedWorldPos = new float3(ltw.Position.x, 0.0f, ltw.Position.z);
+			float3 targetTileWorldPos = new float3(plow.TargetTilePos.x, 0, plow.TargetTilePos.y);
+			float3 diff = flattenedWorldPos - targetTileWorldPos;
+			float dist = math.length(diff);
+			//UnityEngine.Debug.Log(string.Format("{0} {1} {2} {3} {4}", dist, ltw.Position.x, ltw.Position.z, plow.TargetTilePos.x, plow.TargetTilePos.y));
 			//UnityEngine.Debug.Log(string.Format("Progress: {0}", path.progress));
-			if (math.length(diff) < 1.1f) //because Y lol
-			//if (path.progress <1f)
+			if (dist < 0.1f)
 			{
-				UnityEngine.Debug.Log("got there");
-				
 				int sectionRefId = grid.GetSectionId(plow.TargetTilePos);
 				int tileIndex = grid.GetTileIndex(plow.TargetTilePos);
 				Entity sectionEntity = sectionRefBuffer[gridEntity][sectionRefId].SectionEntity;
