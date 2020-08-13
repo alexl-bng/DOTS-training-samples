@@ -19,7 +19,8 @@ public class FarmerMovementSystem : SystemBase
             All = new[]
             {
                 ComponentType.ReadOnly<Rock>(),
-                ComponentType.ReadOnly<LocalToWorld>()
+                ComponentType.ReadOnly<LocalToWorld>(),
+                ComponentType.ReadOnly<GridOccupant>()
             }
         });
         
@@ -30,9 +31,12 @@ public class FarmerMovementSystem : SystemBase
     {
         var rockEntities = m_rockQuery.ToEntityArrayAsync(Allocator.TempJob, out var rockEntitiesHandle);
         var rockLocations = m_rockQuery.ToComponentDataArrayAsync<LocalToWorld>(Allocator.TempJob, out var rockLocationsHandle);
+        var rockOccupants = m_rockQuery.ToComponentDataArrayAsync<GridOccupant>(Allocator.TempJob, out var rockOccupantsHandle);
+
         m_rockQuery.CompleteDependency();
         var deltaTime = Time.DeltaTime;
         Dependency = JobHandle.CombineDependencies(Dependency, rockEntitiesHandle, rockLocationsHandle);
+        Dependency = JobHandle.CombineDependencies(Dependency, rockOccupantsHandle);
         var ecb = m_ecb.CreateCommandBuffer();
         
         Entities
@@ -74,7 +78,7 @@ public class FarmerMovementSystem : SystemBase
                             ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
-                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, nextLocation, ref ecb))
+                    if (FarmerUtils.IsObstructionPresent(ref rockEntities, ref rockLocations, ref rockOccupants, nextLocation, ref ecb))
                     {
                         ecb.RemoveComponent<WorkerIntent_None>(entity);
                         
@@ -109,6 +113,7 @@ public class FarmerMovementSystem : SystemBase
         ).Run();
         
         rockLocations.Dispose();
+        rockOccupants.Dispose();
         rockEntities.Dispose();
     }
 
@@ -117,14 +122,21 @@ public class FarmerMovementSystem : SystemBase
 
 public class FarmerUtils
 {
-    public static bool IsObstructionPresent(ref NativeArray<Entity> entities, ref NativeArray<LocalToWorld> locations, float3 position, ref EntityCommandBuffer ecb)
+    public static bool IsObstructionPresent(ref NativeArray<Entity> entities, ref NativeArray<LocalToWorld> locations, 
+        ref NativeArray<GridOccupant> occupants, float3 position, ref EntityCommandBuffer ecb)
     {
         for (int i = 0; i < entities.Length; i++)
         {
             LocalToWorld location = locations[i];
+            GridOccupant occupant = occupants[i];
+            float4 bounds;
             
-            if (math.abs(location.Position.x - position.x) < 0.5 &&
-                math.abs(location.Position.z - position.z) < 0.5)
+            bounds.w = location.Position.x;
+            bounds.x = location.Position.x + occupant.GridSize.y;
+            bounds.y = location.Position.z;
+            bounds.z = location.Position.x + occupant.GridSize.x;
+            
+            if (bounds.w <= position.x && position.x <= bounds.x && bounds.y <= position.z && position.z <= bounds.z)
             {
                 ecb.AddComponent(entities[i], new WorkerIntent_Break());
                 return true;
