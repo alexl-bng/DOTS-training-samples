@@ -5,5 +5,5 @@ using Unity.Mathematics;
 public struct Rock : IComponentData
 {
     public AABB bounds;
-    public int health;
+    public float health;
 }

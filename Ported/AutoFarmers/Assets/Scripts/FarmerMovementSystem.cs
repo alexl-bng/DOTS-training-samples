@@ -19,8 +19,7 @@ public class FarmerMovementSystem : SystemBase
             All = new[]
             {
                 ComponentType.ReadOnly<Rock>(),
-                ComponentType.ReadOnly<Translation>(),
-                ComponentType.ReadOnly<Scale>()
+                ComponentType.ReadOnly<LocalToWorld>()
             }
         });
         
@@ -29,22 +28,23 @@ public class FarmerMovementSystem : SystemBase
     
     protected override void OnUpdate()
     {
-        var rockTranslations = m_rockQuery.ToComponentDataArrayAsync<Translation>(Allocator.Temp, out var rockTranslationsHandle);
-        var rockScales = m_rockQuery.ToComponentDataArrayAsync<Scale>(Allocator.Temp, out var rockScalesHandle);
+        var rockEntities = m_rockQuery.ToEntityArrayAsync(Allocator.TempJob, out var rockEntitiesHandle);
+        var rockLocations = m_rockQuery.ToComponentDataArrayAsync<LocalToWorld>(Allocator.TempJob, out var rockLocationsHandle);
+        m_rockQuery.CompleteDependency();
         var deltaTime = Time.DeltaTime;
-        Dependency = JobHandle.CombineDependencies(Dependency, rockTranslationsHandle, rockScalesHandle);
+        Dependency = JobHandle.CombineDependencies(Dependency, rockEntitiesHandle, rockLocationsHandle);
         var ecb = m_ecb.CreateCommandBuffer();
         
         Entities
             .WithName("farmer_movement")
             .WithAll<Farmer, Path>()
-            .WithoutBurst()
-            .WithDisposeOnCompletion(rockTranslations)
-            .WithDisposeOnCompletion(rockScales)
+            //.WithDisposeOnCompletion(rockTranslations)
+            //.WithDisposeOnCompletion(rockScales)
+            //.WithDisposeOnCompletion(rockEntities)
             .ForEach((Entity entity, ref Path path, in LocalToWorld ltw) =>
             {
-                if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.01 &&
-                    math.abs(path.targetPosition.z - ltw.Position.z) < 0.01)
+                if (math.abs(path.targetPosition.x - ltw.Position.x) < 0.1 &&
+                    math.abs(path.targetPosition.z - ltw.Position.z) < 0.1)
                 {
                     if (!HasComponent<PathComplete>(entity))
                     {
@@ -53,35 +53,49 @@ public class FarmerMovementSystem : SystemBase
                 }
                 else
                 {
-                    ecb.RemoveComponent<PathComplete>(entity);
+                    if (HasComponent<PathComplete>(entity))
+                    {
+                        ecb.RemoveComponent<PathComplete>(entity);
+                    }
+
                     // TODO: account for smoothing
                     Vector3 nextLocation = ltw.Position;
                     
-                    if (math.abs(path.targetPosition.x - ltw.Position.x) > 0.01)
+                    // TODO: account for grid bounds
+                    if (math.abs(path.targetPosition.x - ltw.Position.x) > 0.1)
                     {    // move along X
                         nextLocation =
-                            ltw.Position + new float3(path.targetPosition.x > ltw.Position.x ? 1f : -1f, 0, 0);
+                            ltw.Position + new float3((path.targetPosition.x > ltw.Position.x ? 1f : -1f) * (deltaTime * path.speed)
+                                , 0, 0);
                     }
-                    else if (math.abs(path.targetPosition.z - ltw.Position.z) > 0.01) 
+                    else if (math.abs(path.targetPosition.z - ltw.Position.z) > 0.1) 
                     {    // move along Z
                         nextLocation =
-                            ltw.Position + new float3(0, 0, path.targetPosition.z > ltw.Position.z ? 1f : -1f);
+                            ltw.Position + new float3(0, 0, (path.targetPosition.z > ltw.Position.z ? 1f : -1f) * (deltaTime * path.speed));
                     }
                 
-                    if (IsObstructionPresent(rockTranslations, rockScales, nextLocation))
+                    if (FarmerUtils.IsObstructionPresent(rockEntities, rockLocations, nextLocation, ref ecb))//, out Entity rockEntity))
                     {
+                        ecb.RemoveComponent<WorkerIntent_None>(entity);
                         ecb.AddComponent(entity, new WorkerIntent_Break());
                     }
                     else
                     {
-                        ecb.AddComponent(entity, new Translation()
+                        if (HasComponent<WorkerIntent_Break>(entity))
+                        {
+                            ecb.RemoveComponent<WorkerIntent_Break>(entity);
+                        }
+                        
+                        ecb.SetComponent(entity, new Translation()
                         {
                             Value = nextLocation
                         });
                     }
                 
-                    var distanceFromSource = Vector3.Distance(path.sourcePosition, path.targetPosition);
-                    path.progress = (Vector3.Distance(ltw.Position, path.targetPosition) / distanceFromSource) * 100.0f;
+                    var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
+                    path.progress = distanceFromSource < 0.1f
+                        ? 100.0f
+                        : ((math.distance(ltw.Position, path.targetPosition) / distanceFromSource) * 100.0f);
                 }
                 
                 // draw a straight line from the current position to the target
@@ -89,22 +103,30 @@ public class FarmerMovementSystem : SystemBase
                     new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
             }
         ).Run();
+        
+        rockLocations.Dispose();
+        rockEntities.Dispose();
     }
 
-    private bool IsObstructionPresent(NativeArray<Translation> translations, NativeArray<Scale> scales, float3 position)
+    
+}
+
+public class FarmerUtils
+{
+    public static bool IsObstructionPresent(NativeArray<Entity> entities, NativeArray<LocalToWorld> locations, float3 position, ref EntityCommandBuffer ecb)
     {
-        for (int i = 0; i < translations.Length; i++)
+        for (int i = 0; i < entities.Length; i++)
         {
-            Translation tl = translations[i];
-            Scale scale = scales[i];
+            LocalToWorld location = locations[i];
             
-            if (math.abs(tl.Value.x - position.x) < 0.01 &&
-                math.abs(tl.Value.z - position.z) < 0.01)
+            if (math.abs(location.Position.x - position.x) < 0.01 &&
+                math.abs(location.Position.z - position.z) < 0.01)
             {
+                ecb.AddComponent(entities[i], new WorkerIntent_Break());
                 return true;
             }
         }
-        
+
         return false;
     }
 }
