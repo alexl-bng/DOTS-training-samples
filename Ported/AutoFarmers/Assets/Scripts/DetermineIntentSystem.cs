@@ -328,7 +328,7 @@ class WorkerIntentUtils
 		int2 workerGridLoc = new int2((int)math.floor(workerTranslation.Value.x), (int)math.floor(workerTranslation.Value.z));
 
 		int attempts = 10;
-		int sectionSearchRadius = 2;
+		int sectionSearchRadius = 1;
 
 		while (!fieldFound && attempts > 0)
 		{
