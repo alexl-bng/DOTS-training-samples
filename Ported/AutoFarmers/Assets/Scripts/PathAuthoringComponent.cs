@@ -10,6 +10,5 @@ public struct Path : IComponentData
     public float3 sourcePosition;
     public float3 targetPosition;
     public float speed;
-    public float progress;
     public float smoothingFactor;
 }

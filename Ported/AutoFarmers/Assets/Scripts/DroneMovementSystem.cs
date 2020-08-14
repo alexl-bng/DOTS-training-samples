@@ -22,7 +22,7 @@ public class DroneMovementSystem : SystemBase
         Entities
             .WithName("drone_movement")
             .WithAll<Drone, Path>()
-            .ForEach((int entityInQueryIndex, Entity entity, ref Path path, in Translation translation) =>
+            .ForEach((int entityInQueryIndex, Entity entity, ref Path path, ref Translation translation) =>
                 {
                     // Drones make a direct bee line to their target
                     // TODO: account for smoothing
@@ -48,14 +48,9 @@ public class DroneMovementSystem : SystemBase
 							ecb.RemoveComponent<NoMovement>(entityInQueryIndex, entity);
 						}
 
-						ecb.AddComponent(entityInQueryIndex, entity,  new Translation()
-                        {
-                            Value = Vector3.MoveTowards(translation.Value, path.targetPosition, path.speed * deltaTime)
-                        });
+                        translation.Value = Vector3.MoveTowards(translation.Value, path.targetPosition,
+                            path.speed * deltaTime);
 
-                        var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
-                        path.progress = math.distance(translation.Value, path.targetPosition) / distanceFromSource * 100.0f;
-                        
                         // draw a straight line from the current position to the target
                         Debug.DrawLine(new Vector3(translation.Value.x, 0.1f, translation.Value.z),
                             new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);

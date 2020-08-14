@@ -125,11 +125,6 @@ public class FarmerMovementSystem : SystemBase
 
                         translation.Value = nextLocation;
                     }
-                
-                    var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
-                    path.progress = distanceFromSource < 0.1f
-                        ? 100.0f
-                        : ((math.distance(translation.Value, path.targetPosition) / distanceFromSource) * 100.0f);
                 }
                 
                 // draw a straight line from the current position to the target
