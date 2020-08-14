@@ -70,19 +70,33 @@ public class FarmerMovementSystem : SystemBase
 					float3 nextLocation = translation.Value;
                     
                     // TODO: account for grid bounds
-                    if (math.abs(path.targetPosition.x - translation.Value.x) > 0.1)
+                    if (math.abs(path.targetPosition.x - translation.Value.x) > 0.25)
                     {    // move along X
                         nextLocation =
                             translation.Value + new float3((path.targetPosition.x > translation.Value.x ? 1f : -1f) * (deltaTime * path.speed)
                                 , 0, 0);
                     }
-                    else if (math.abs(path.targetPosition.z - translation.Value.z) > 0.1) 
-                    {    // move along Z
-                        nextLocation =
-                            translation.Value + new float3(0, 0, (path.targetPosition.z > translation.Value.z ? 1f : -1f) * (deltaTime * path.speed));
-                    }
-                
-                    int2 nextPosInt2 = new int2((int) nextLocation.x, (int) nextLocation.z);
+                    else
+					{
+						float3 previousLocation = translation.Value;
+						previousLocation.x = path.targetPosition.x;
+
+						if (math.abs(path.targetPosition.z - translation.Value.z) > 0.25)
+						{    // move along Z
+							nextLocation =
+								previousLocation + new float3(0, 0, (path.targetPosition.z > translation.Value.z ? 1f : -1f) * (deltaTime * path.speed));
+						}
+						else
+						{
+							previousLocation.z = path.targetPosition.z;
+							nextLocation = previousLocation;
+						}
+					}
+
+					int2 worldDim = grid.GetWorldDimensions();
+					int2 nextPosInt2 = new int2(
+						math.clamp((int)nextLocation.x, 0, worldDim.x-1),
+						math.clamp((int)nextLocation.z, 0, worldDim.y-1));
                     
                     int sectionRefId = grid.GetSectionId(nextPosInt2);
                     int tileIndex = grid.GetTileIndex(nextPosInt2);

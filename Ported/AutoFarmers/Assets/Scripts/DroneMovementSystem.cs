@@ -29,10 +29,12 @@ public class DroneMovementSystem : SystemBase
                     if (math.abs(path.targetPosition.x - translation.Value.x) < 0.1f &&
                         math.abs(path.targetPosition.z - translation.Value.z) < 0.1f)
                     {
-                        if (!HasComponent<PathComplete>(entity))
-                        {
-                            ecb.AddComponent(entityInQueryIndex, entity, new PathComplete());    
-                        }
+						if (!HasComponent<PathComplete>(entity) &&
+							!HasComponent<NoMovement>(entity))
+						{
+                            ecb.AddComponent(entityInQueryIndex, entity, new PathComplete());
+							ecb.AddComponent(entityInQueryIndex, entity, new NoMovement());
+						}
                     }
                     else
                     {
@@ -40,8 +42,13 @@ public class DroneMovementSystem : SystemBase
                         {
                             ecb.RemoveComponent<PathComplete>(entityInQueryIndex, entity);
                         }
-                        
-                        ecb.AddComponent(entityInQueryIndex, entity,  new Translation()
+
+						if (HasComponent<NoMovement>(entity))
+						{
+							ecb.RemoveComponent<NoMovement>(entityInQueryIndex, entity);
+						}
+
+						ecb.AddComponent(entityInQueryIndex, entity,  new Translation()
                         {
                             Value = Vector3.MoveTowards(translation.Value, path.targetPosition, path.speed * deltaTime)
                         });
