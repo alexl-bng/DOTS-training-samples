@@ -11,6 +11,7 @@ public struct WorkerIntent_Sell : IComponentData {}
 public struct WorkerIntent_Sow : IComponentData
 {
 	public int2 TargetTilePos;
+	public int2 ContinueDirection;
 }
 public struct WorkerIntent_Plow : IComponentData
 {

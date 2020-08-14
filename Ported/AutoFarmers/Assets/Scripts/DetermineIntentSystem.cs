@@ -202,6 +202,7 @@ class WorkerIntentUtils
 
 		bool targetFound = false;
 		int2 targetLocation = new int2();
+		int2 targetRowDirection = new int2();
 
 		int attempts = 3;
 		int sectionSearchRadius = 2;
@@ -239,6 +240,45 @@ class WorkerIntentUtils
 					{
 						targetFound = true;
 						targetLocation = grid.GetGridLocationFromIndices(sectionId, tileIndex);
+
+						if (rng.rng.NextBool())
+						{
+							targetRowDirection = new int2(rng.rng.NextBool() ? -1 : 1, 0);
+						}
+						else
+						{
+							targetRowDirection = new int2(0, rng.rng.NextBool() ? -1 : 1);
+						}
+
+						int rowTries = 10;
+						while (rowTries > 0)
+						{
+							rowTries--;
+
+							int2 tryLocation = targetLocation - targetRowDirection;
+							if (grid.IsValidGridLocation(tryLocation))
+							{
+								sectionId = grid.GetSectionId(tryLocation);
+								tileIndex = grid.GetTileIndex(tryLocation);
+								sectionEntity = sectionRefBuffer[gridEntity][sectionId].SectionEntity;
+								sectionTiles = tileBuffer[sectionEntity];
+
+								tile = sectionTiles[tileIndex];
+
+								if (tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied)
+								{
+									targetLocation = tryLocation;
+								}
+								else
+								{
+									rowTries = 0;
+								}
+							}
+							else
+							{
+								rowTries = 0;
+							}
+						}
 						
 						break;
 					}
@@ -250,7 +290,8 @@ class WorkerIntentUtils
 		{
 			ecb.AddComponent(workerEntity, new WorkerIntent_Sow
 			{
-				TargetTilePos = targetLocation
+				TargetTilePos = targetLocation,
+				ContinueDirection = targetRowDirection
 			});
 
 			path.targetPosition = new float3(targetLocation.x, 0, targetLocation.y);
