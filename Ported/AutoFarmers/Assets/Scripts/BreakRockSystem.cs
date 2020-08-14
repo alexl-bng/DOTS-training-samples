@@ -24,11 +24,11 @@ public class BreakRockSystem : SystemBase
         
         Entities.
             WithAll<Rock, WorkerIntent_Break>().
-            ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref Rock rockData) =>
+            ForEach((int entityInQueryIndex, Entity entity, ref Translation translation, ref Rock rockData, in GridOccupant gridOccupant) =>
             {
                 if (rockData.health > 0)
                 {
-                    translation.Value.y -= ((float)(breakRate) * deltaTime);
+					translation.Value.y = 0.5f * (rockData.health / (gridOccupant.GridSize.x * gridOccupant.GridSize.y)) - 0.25f;
                     rockData.health -= (breakRate);
                 }
                 else
