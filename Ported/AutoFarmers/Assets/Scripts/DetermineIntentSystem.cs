@@ -389,6 +389,10 @@ class WorkerIntentUtils
 										}
 									}
 								}
+								else
+								{
+									doExpand = false;
+								}
 							}
 						}
 
