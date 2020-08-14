@@ -102,4 +102,5 @@ public struct GridTile : IBufferElementData
 	public Entity OccupyingEntity;
 	public bool RenderTileDirty;
 	public Entity RenderTileEntity;
+	public int2 ClosestStoreOffset;
 }

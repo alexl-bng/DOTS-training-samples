@@ -243,14 +243,6 @@ class WorkerIntentUtils
 		RandomNumberGenerator rng,
 		ref Path path)
 	{
-		//tjtj: maybe someday
-		//int fieldWidth = rng.rng.NextInt(0, 8);
-		//int fieldHeight = rng.rng.NextInt(0, 8);
-		//ecb.AddComponent<FieldDimensions>(entity);
-		//ecb.SetComponent(entity, new FieldDimensions {Width = fieldWidth, Height = fieldHeight });
-
-		int2 worldDim = grid.GetWorldDimensions();
-
 		int fieldMinWidth = 2;
 		int fieldMinHeight = 2;
 		int fieldTargetWidth = rng.rng.NextInt(fieldMinWidth, 8);

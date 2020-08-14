@@ -4,8 +4,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-
-
 public class HarvestSearchSystem : SystemBase
 {
 	private EntityQuery m_plantQuery;

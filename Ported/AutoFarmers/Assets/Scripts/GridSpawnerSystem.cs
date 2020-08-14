@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using System;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using Random = Unity.Mathematics.Random;
@@ -76,14 +77,15 @@ public class GridSpawnerSystem : SystemBase
 							{
 								Value = ltw.Position + new float3(sectionX * spawner.GridSectionDimensions.x + tileX, -0.5f, sectionZ * spawner.GridSectionDimensions.y + tileZ) * spawner.GridWorldScale
 							});
-							
+
 							sectionTileBuffer.Add(new GridTile
 							{
 								IsPlowed = false,
 								IsReserved = false,
 								OccupationType = OccupationType.Unoccupied,
 								OccupyingEntity = Entity.Null,
-								RenderTileEntity = tileEntity
+								RenderTileEntity = tileEntity,
+								ClosestStoreOffset = new int2(Int32.MaxValue - 1, Int32.MaxValue - 1)
 							});
 						}
 					}

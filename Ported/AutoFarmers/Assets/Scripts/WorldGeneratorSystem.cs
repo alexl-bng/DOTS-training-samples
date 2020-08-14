@@ -1,9 +1,17 @@
-﻿using Unity.Burst;
+﻿using System.Security.Cryptography.X509Certificates;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
+using UnityEngine;
+
+public struct ClosestStoreFloodNode
+{
+	public int2 StoreLocation;
+	public int2 Offset;
+}
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public class WorldGeneratorSystem : SystemBase
@@ -23,12 +31,14 @@ public class WorldGeneratorSystem : SystemBase
 		WorldGenerator worldGen = _worldGeneratorQuery.GetSingleton<WorldGenerator>();
 
 		NativeHashSet<int2> usedTiles = new NativeHashSet<int2>(0, Allocator.TempJob);
+		NativeQueue<ClosestStoreFloodNode> storeFloodQueue = new NativeQueue<ClosestStoreFloodNode>(Allocator.TempJob);
 
 	    BufferFromEntity<GridSectionReference> sectionRefs = GetBufferFromEntity<GridSectionReference>(true);
 	    BufferFromEntity<GridTile> tileBuffers = GetBufferFromEntity<GridTile>(false);
 
 		Entities
 			.WithDisposeOnCompletion(usedTiles)
+			.WithDisposeOnCompletion(storeFloodQueue)
 			.WithAll<NeedsWorldGeneration>()
 			.ForEach((Entity entity, ref RandomNumberGenerator rng, in Grid grid) =>
 		{
@@ -60,6 +70,12 @@ public class WorldGeneratorSystem : SystemBase
 						usedTiles.Add(tryLocation + new int2(0, -1));
 						usedTiles.Add(tryLocation + new int2(1, 0));
 						usedTiles.Add(tryLocation + new int2(-1, 0));
+
+						storeFloodQueue.Enqueue(new ClosestStoreFloodNode
+						{
+							StoreLocation = tryLocation,
+							Offset = new int2(0, 0)
+						});
 
 						attempts = 0;
 					}
@@ -143,7 +159,7 @@ public class WorldGeneratorSystem : SystemBase
 					if (!usedTiles.Contains(tryLocation))
 					{
 						int sectionIndex = grid.GetSectionId(tryLocation);
-						int tileIndex = grid.GetSectionId(tryLocation);
+						int tileIndex = grid.GetTileIndex(tryLocation);
 						Entity sectionEntity = sectionRefs[entity][sectionIndex].SectionEntity;
 
 						DynamicBuffer<GridTile> tileBuffer = tileBuffers[sectionEntity];
@@ -168,6 +184,51 @@ public class WorldGeneratorSystem : SystemBase
 				}
 			}
 
+			while (!storeFloodQueue.IsEmpty())
+			{
+				ClosestStoreFloodNode thisNode = storeFloodQueue.Dequeue();
+				int2 thisLocation = thisNode.StoreLocation - thisNode.Offset;
+
+				if (grid.IsValidGridLocation(thisLocation))
+				{
+					int sectionIndex = grid.GetSectionId(thisLocation);
+					int tileIndex = grid.GetTileIndex(thisLocation);
+					Entity sectionEntity = sectionRefs[entity][sectionIndex].SectionEntity;
+					DynamicBuffer<GridTile> tileBuffer = tileBuffers[sectionEntity];
+					GridTile tile = tileBuffer[tileIndex];
+
+					if (math.abs(thisNode.Offset.x) + math.abs(thisNode.Offset.y) < (long)math.abs(tile.ClosestStoreOffset.x) + math.abs(tile.ClosestStoreOffset.y))
+					{
+						tile.ClosestStoreOffset = thisNode.Offset;
+						tileBuffer[tileIndex] = tile;
+
+						storeFloodQueue.Enqueue(new ClosestStoreFloodNode
+						{
+							StoreLocation = thisNode.StoreLocation,
+							Offset = thisNode.Offset + new int2(1, 0)
+						});
+
+						storeFloodQueue.Enqueue(new ClosestStoreFloodNode
+						{
+							StoreLocation = thisNode.StoreLocation,
+							Offset = thisNode.Offset + new int2(-1, 0)
+						});
+
+						storeFloodQueue.Enqueue(new ClosestStoreFloodNode
+						{
+							StoreLocation = thisNode.StoreLocation,
+							Offset = thisNode.Offset + new int2(0, 1)
+						});
+
+						storeFloodQueue.Enqueue(new ClosestStoreFloodNode
+						{
+							StoreLocation = thisNode.StoreLocation,
+							Offset = thisNode.Offset + new int2(0, -1)
+						});
+					}
+				}
+			}
+			
 			ecb.RemoveComponent<NeedsWorldGeneration>(entity);
         }).Schedule();
 
