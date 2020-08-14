@@ -329,13 +329,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
   Count:
-    x: 1
+    x: 40
     y: 1
-    z: 1
+    z: 40
   Spacing:
-    x: 0
+    x: 10
     y: 0
-    z: 0
+    z: 10
 --- !u!4 &1812496993
 Transform:
   m_ObjectHideFlags: 0
