@@ -42,7 +42,7 @@ public class FarmerMovementSystem : SystemBase
             .WithAll<Farmer, Path>()
             .WithReadOnly(sectionRefBuffer)
             .WithReadOnly(tileBufferMap)
-			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, in Translation translation) =>
+			.ForEach((int entityInQueryIndex, Entity entity, ref Path path, ref Translation translation) =>
             {
                 if (math.abs(path.targetPosition.x - translation.Value.x) < 0.1 &&
                     math.abs(path.targetPosition.z - translation.Value.z) < 0.1)
@@ -69,7 +69,6 @@ public class FarmerMovementSystem : SystemBase
 					// TODO: account for smoothing
 					float3 nextLocation = translation.Value;
                     
-                    // TODO: account for grid bounds
                     if (math.abs(path.targetPosition.x - translation.Value.x) > 0.25)
                     {    // move along X
                         nextLocation =
@@ -94,6 +93,7 @@ public class FarmerMovementSystem : SystemBase
 					}
 
 					int2 worldDim = grid.GetWorldDimensions();
+					// ensure tile location is valid
 					int2 nextPosInt2 = new int2(
 						math.clamp((int)nextLocation.x, 0, worldDim.x-1),
 						math.clamp((int)nextLocation.z, 0, worldDim.y-1));
@@ -120,17 +120,10 @@ public class FarmerMovementSystem : SystemBase
                         if (HasComponent<WorkerIntent_Break>(entity))
                         {
                             ecb.RemoveComponent<WorkerIntent_Break>(entityInQueryIndex, entity);
-							
-							ecb.SetComponent(entityInQueryIndex, entity, new Translation()
-                            {
-                                Value = path.sourcePosition
-                            });
+							translation.Value = path.sourcePosition;
                         }
-                        
-                        ecb.SetComponent(entityInQueryIndex, entity, new Translation()
-                        {
-                            Value = nextLocation
-                        });
+
+                        translation.Value = nextLocation;
                     }
                 
                     var distanceFromSource = math.distance(path.sourcePosition, path.targetPosition);
@@ -140,8 +133,8 @@ public class FarmerMovementSystem : SystemBase
                 }
                 
                 // draw a straight line from the current position to the target
-                Debug.DrawLine(new Vector3(translation.Value.x, 0.1f, translation.Value.z),
-                    new Vector3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
+                Debug.DrawLine(new float3(translation.Value.x, 0.1f, translation.Value.z),
+                    new float3(path.targetPosition.x, 0.1f, path.targetPosition.z), Color.red);
             }
         ).ScheduleParallel();
 		
