@@ -106,7 +106,7 @@ public class FarmerMovementSystem : SystemBase
 
                     if (tile.OccupationType == OccupationType.Rock)
                     {
-                        ecb.RemoveComponent<WorkerIntent_None>(entityInQueryIndex, entity);
+                        //ecb.RemoveComponent<WorkerIntent_None>(entityInQueryIndex, entity);
                         
                         if (!HasComponent<WorkerIntent_Break>(entity))
                         {
