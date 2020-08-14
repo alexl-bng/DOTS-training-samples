@@ -73,7 +73,7 @@ public class DetermineIntentSystem_Farmer : SystemBase
 					break;
 				case 1:
 					//UnityEngine.Debug.Log("sowing...");
-					switchedToState = WorkerIntentUtils.SwitchToSowIntent(ecb, entity, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
+					switchedToState = WorkerIntentUtils.SwitchToSowIntent(ecb, entity, workerTranslation, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer, rng, ref path);
 					break;
 				case 2:
 					//UnityEngine.Debug.Log("plowing...");
@@ -189,6 +189,7 @@ class WorkerIntentUtils
 	public static bool SwitchToSowIntent(
 		EntityCommandBuffer ecb,
 		Entity workerEntity,
+		Translation workerTranslation,
 		ref Grid grid,
 		Entity gridEntity,
 		ref BufferFromEntity<GridSectionReference> sectionRefBuffer,
@@ -196,40 +197,71 @@ class WorkerIntentUtils
 		RandomNumberGenerator rng,
 		ref Path path)
 	{
-		int2 worldDim = grid.GetWorldDimensions();
 
-		int tries = 10;
+		int2 workerGridLoc = new int2((int)math.floor(workerTranslation.Value.x), (int)math.floor(workerTranslation.Value.z));
 
-		bool foundTile = false;
-		int x;
-		int y;
-		do
+		bool targetFound = false;
+		int2 targetLocation = new int2();
+
+		int attempts = 3;
+		int sectionSearchRadius = 2;
+
+		while (!targetFound && attempts > 0)
 		{
-			tries--;
-			x = rng.rng.NextInt(0, worldDim.x);
-			y = rng.rng.NextInt(0, worldDim.y);
-			GridTile tile = GetTileAtPos(x, y, ref grid, gridEntity, ref sectionRefBuffer, ref tileBuffer);
-			foundTile = tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied;
-			} while (!foundTile && tries > 0);
+			attempts--;
 
-		if (foundTile)
-		{			
-			//reserve?
-			ecb.AddComponent<WorkerIntent_Sow>(workerEntity);
-			ecb.SetComponent(workerEntity, new WorkerIntent_Sow
+			int sectionId = -1;
+
+			for (int pickSectionAttempt = 0; pickSectionAttempt < 10; pickSectionAttempt++)
 			{
-				TargetTilePos = new int2(x, y)
+				int2 locOffset = grid.SectionDimensions * new int2(rng.rng.NextInt(-sectionSearchRadius, sectionSearchRadius + 1), rng.rng.NextInt(-sectionSearchRadius, sectionSearchRadius + 1));
+				if (grid.IsValidGridLocation(workerGridLoc + locOffset))
+				{
+					sectionId = grid.GetSectionId(workerGridLoc + locOffset);
+					break;
+				}
+			}
+
+			if (sectionId != -1)
+			{
+				Entity sectionEntity = sectionRefBuffer[gridEntity][sectionId].SectionEntity;
+				DynamicBuffer<GridTile> sectionTiles = tileBuffer[sectionEntity];
+
+				int bufferSize = sectionTiles.Length;
+
+				int searchStart = rng.rng.NextInt(0, bufferSize);
+				for (int tileOffset = 0; tileOffset < bufferSize; tileOffset++)
+				{
+					int tileIndex = (searchStart + tileOffset) % bufferSize;
+					GridTile tile = sectionTiles[tileIndex];
+
+					if (tile.IsPlowed && tile.OccupationType == OccupationType.Unoccupied)
+					{
+						targetFound = true;
+						targetLocation = grid.GetGridLocationFromIndices(sectionId, tileIndex);
+						
+						break;
+					}
+				}
+			}
+		}
+
+		if (targetFound)
+		{
+			ecb.AddComponent(workerEntity, new WorkerIntent_Sow
+			{
+				TargetTilePos = targetLocation
 			});
 
-			path.targetPosition = new float3(x, 0, y);
+			path.targetPosition = new float3(targetLocation.x, 0, targetLocation.y);
 			ecb.RemoveComponent<PathComplete>(workerEntity);
+			
+			return true;
 		}
 		else
 		{
 			return false;
 		}
-
-		return true;
 	}
 
 	public static bool SwitchToPlowIntent(
@@ -255,7 +287,7 @@ class WorkerIntentUtils
 		int2 workerGridLoc = new int2((int)math.floor(workerTranslation.Value.x), (int)math.floor(workerTranslation.Value.z));
 
 		int attempts = 10;
-		int sectionSearchRadius = 1;
+		int sectionSearchRadius = 2;
 
 		while (!fieldFound && attempts > 0)
 		{
