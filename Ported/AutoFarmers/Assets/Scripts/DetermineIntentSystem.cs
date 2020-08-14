@@ -47,15 +47,8 @@ public class DetermineIntentSystem_Farmer : SystemBase
 		BufferFromEntity<GridSectionReference> sectionRefBuffer = GetBufferFromEntity<GridSectionReference>();
 		BufferFromEntity<GridTile> tileBuffer = GetBufferFromEntity<GridTile>();
 
-		NativeArray<Translation> plantTranslations = m_plantQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out JobHandle plantTranslationHandle);
-		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArrayAsync(Allocator.TempJob, out JobHandle plantEntitiesHandle);
-
-		Dependency = JobHandle.CombineDependencies(Dependency, plantTranslationHandle, plantEntitiesHandle);
-
-		JobHandle foreachHandle = Entities
+		Entities
 			.WithAll<Farmer, WorkerIntent_None>()
-			.WithDisposeOnCompletion(plantTranslations)
-			.WithDisposeOnCompletion(plantEntities)
 			.ForEach((
 				Entity entity,
 				ref Path path,
@@ -69,7 +62,8 @@ public class DetermineIntentSystem_Farmer : SystemBase
 			{
 				case 0:
 					//UnityEngine.Debug.Log("Harvesting...");
-					switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, plantTranslations, plantEntities);
+					ecb.AddComponent<WorkerIntent_HarvestSearch>(entity);
+					switchedToState = true;					
 					break;
 				case 1:
 					//UnityEngine.Debug.Log("sowing...");
@@ -83,7 +77,6 @@ public class DetermineIntentSystem_Farmer : SystemBase
 					//UnityEngine.Debug.Log("breaking...");
 					switchedToState = WorkerIntentUtils.SwitchToBreakIntent(ecb, entity);
 					break;
-
 			}
 
 			if (switchedToState)
@@ -91,9 +84,7 @@ public class DetermineIntentSystem_Farmer : SystemBase
 				ecb.RemoveComponent<WorkerIntent_None>(entity);
 			}
 			
-		}).Schedule(Dependency);
-		
-		Dependency = foreachHandle;
+		}).Schedule();
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
 	}
@@ -123,15 +114,8 @@ public class DetermineIntentSystem_Drone: SystemBase
 		EntityCommandBufferSystem ecbSystem = World.GetExistingSystem<EndInitializationEntityCommandBufferSystem>();
 		EntityCommandBuffer ecb = ecbSystem.CreateCommandBuffer();
 
-		NativeArray<Translation> plantTranslations = m_plantQuery.ToComponentDataArrayAsync<Translation>(Allocator.TempJob, out JobHandle plantTranslationHandle);
-		NativeArray<Entity> plantEntities = m_plantQuery.ToEntityArrayAsync(Allocator.TempJob, out JobHandle plantEntitiesHandle);
-
-		Dependency = JobHandle.CombineDependencies(Dependency, plantTranslationHandle, plantEntitiesHandle);
-
-		JobHandle foreachHandle = Entities
+		Entities
 			.WithAll<Drone, WorkerIntent_None>()
-			.WithDisposeOnCompletion(plantTranslations)
-			.WithDisposeOnCompletion(plantEntities)
 			.ForEach((
 				Entity entity,
 				ref RandomNumberGenerator rng) =>
@@ -141,7 +125,8 @@ public class DetermineIntentSystem_Drone: SystemBase
 				switch (nextStateIndex)
 				{
 					case 0:
-						switchedToState = WorkerIntentUtils.SwitchToHarvestIntent(ecb, entity, plantTranslations, plantEntities);
+						ecb.AddComponent<WorkerIntent_HarvestSearch>(entity);
+						switchedToState = true;						
 						break;
 
 				}
@@ -149,9 +134,7 @@ public class DetermineIntentSystem_Drone: SystemBase
 				{
 					ecb.RemoveComponent<WorkerIntent_None>(entity);
 				}
-			}).Schedule(Dependency);
-
-		Dependency = foreachHandle;
+			}).Schedule();
 
 		ecbSystem.AddJobHandleForProducer(Dependency);
 	}
@@ -160,22 +143,6 @@ public class DetermineIntentSystem_Drone: SystemBase
 
 class WorkerIntentUtils
 {
-	public static bool SwitchToHarvestIntent(EntityCommandBuffer ecb, Entity entity, NativeArray<Translation> plantTranslations, NativeArray<Entity> plantEntities)
-	{
-		ecb.AddComponent<WorkerIntent_HarvestSearch>(entity);
-		return true;
-		//return false;
-		if (plantEntities.Length == 0 || plantEntities[0] == Entity.Null)
-		{
-			return false;
-		}
-		//reserve?
-
-		ecb.AddComponent<WorkerIntent_Harvest>(entity);
-		ecb.SetComponent(entity, new WorkerIntent_Harvest { PlantEntity = plantEntities[0] });
-		ecb.RemoveComponent<PlantStateGrown>(plantEntities[0]);
-		return true;
-	}
 
 	public static bool SwitchToBreakIntent(EntityCommandBuffer ecb, Entity entity)
 	{
