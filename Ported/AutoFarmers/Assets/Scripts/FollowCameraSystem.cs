@@ -37,6 +37,7 @@ public class FollowCameraSystem : SystemBase
 		if (!_hasBasePosition)
 		{
 			_cameraBasePosition = _cameraTransform.position;
+			_hasBasePosition = true;
 		}
 
 		if (Input.GetKeyDown(KeyCode.Space))
