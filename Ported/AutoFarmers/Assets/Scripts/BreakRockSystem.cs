@@ -4,7 +4,6 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-//[UpdateAfter(typeof(F))]
 public class BreakRockSystem : SystemBase
 {
     private EntityCommandBufferSystem m_ecb;
@@ -43,12 +42,9 @@ public class BreakRockSystem : SystemBase
         
         Entities
             .WithAll<Farmer, WorkerIntent_Break>()
-            .ForEach((int entityInQueryIndex, Entity entity, in Translation translation) =>
+            .ForEach((int entityInQueryIndex, Entity entity, ref Translation translation) =>
         {
-            ecb.SetComponent(entityInQueryIndex, entity, new Translation()
-            {
-                Value = new float3(translation.Value.x, translation.Value.y + ((float)(math.sin(time) * deltaTime) / 5.0f), translation.Value.z)
-            });
+            translation.Value.y = translation.Value.y + ((float) (math.sin(time) * deltaTime) / 5.0f);
         }).ScheduleParallel();
         
         m_ecb.AddJobHandleForProducer(Dependency);
