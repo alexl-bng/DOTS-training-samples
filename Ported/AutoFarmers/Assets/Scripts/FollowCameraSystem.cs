@@ -16,6 +16,7 @@ public class FollowCameraSystem : SystemBase
 	private Entity _followingEntity = Entity.Null;
 	private Random _random;
 	private float _zoom;
+	private bool _hasBasePosition;
 
 	private const float _kLerpRate = 0.3f;
 	private const float _kFollowDistance = 20;
@@ -26,13 +27,18 @@ public class FollowCameraSystem : SystemBase
 		_farmerQuery = EntityManager.CreateEntityQuery(typeof(Farmer));
 
 		_cameraTransform = GameObject.FindObjectOfType<Camera>().transform;
-		_cameraBasePosition = _cameraTransform.position;
+		//_cameraBasePosition = _cameraTransform.position;
 
 		_random = new Random(1234);
 	}
 
     protected override void OnUpdate()
     {
+		if (!_hasBasePosition)
+		{
+			_cameraBasePosition = _cameraTransform.position;
+		}
+
 		if (Input.GetKeyDown(KeyCode.Space))
 		{
 			if (_followingEntity == Entity.Null)
