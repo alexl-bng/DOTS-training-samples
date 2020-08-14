@@ -237,36 +237,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d02ce97409e608f4e912874d07f47071, type: 3}
---- !u!1 &939753498 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3086085629408365747, guid: d02ce97409e608f4e912874d07f47071, type: 3}
-  m_PrefabInstance: {fileID: 939753497}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &939753499
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 939753498}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 742e4b2e858405f4dbf93ece382d7b6b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  StoreTargetCount: 50
-  RockAttempts: 1000
-  RockSizeMin:
-    x: 1
-    y: 1
-  RockSizeMax:
-    x: 5
-    y: 5
-  PlowedTileTargetCount: 0
-  UnplowedTilePrefab: {fileID: 7817550659131983143, guid: 1244d86937f710f40996550bb16217cf, type: 3}
-  PlowedTilePrefab: {fileID: 7817550659131983143, guid: ee507ad3a6b2d434695a36ac107a2621, type: 3}
-  StorePrefab: {fileID: 6701329909793408903, guid: b78c63a24e216f04e835ba36eff013ae, type: 3}
-  RockPrefab: {fileID: 7817550659131983143, guid: ca0e61877fe94634fa2dc53c3ebd4758, type: 3}
 --- !u!1 &1420970327
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,8 +270,8 @@ MonoBehaviour:
     x: 21
     y: 21
   GridSectionCount:
-    x: 10
-    y: 10
+    x: 21
+    y: 21
   GridWorldScale:
     x: 1
     y: 1
@@ -351,9 +321,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
   Count:
-    x: 25
+    x: 50
     y: 1
-    z: 25
+    z: 50
   Spacing:
     x: 0
     y: 0

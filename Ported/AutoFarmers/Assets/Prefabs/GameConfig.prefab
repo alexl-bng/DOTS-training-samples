@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2419965501179641615}
   - component: {fileID: -3951614061555265711}
   - component: {fileID: -8742828128748123504}
+  - component: {fileID: 939753499}
   m_Layer: 0
   m_Name: GameConfig
   m_TagString: Untagged
@@ -47,7 +48,7 @@ MonoBehaviour:
   PlantPrefab: {fileID: 5732558760118206759, guid: c1c97c14eb9850f4d9020cf6ba309d6b, type: 3}
   PlantScale:
     x: 0.25
-    y: 10
+    y: 4
     z: 0.25
   GrowthTime: 5
   WarpTime: 1
@@ -66,5 +67,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   FarmerPrefab: {fileID: 6701329909793408903, guid: 62b31ecb85289ac4986b68140a7d8788, type: 3}
   DronePrefab: {fileID: 6701329909793408903, guid: d5dd6321b51eb2c43992474b89869181, type: 3}
-  MaxFarmerCount: 1000
-  MaxDroneCount: 1000
+  MaxFarmerCount: 5000
+  MaxDroneCount: 5000
+--- !u!114 &939753499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3086085629408365747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 742e4b2e858405f4dbf93ece382d7b6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StoreTargetCount: 500
+  RockAttempts: 5000
+  RockSizeMin:
+    x: 1
+    y: 1
+  RockSizeMax:
+    x: 5
+    y: 5
+  PlowedTileTargetCount: 0
+  UnplowedTilePrefab: {fileID: 7817550659131983143, guid: 1244d86937f710f40996550bb16217cf, type: 3}
+  PlowedTilePrefab: {fileID: 7817550659131983143, guid: ee507ad3a6b2d434695a36ac107a2621, type: 3}
+  StorePrefab: {fileID: 6701329909793408903, guid: b78c63a24e216f04e835ba36eff013ae, type: 3}
+  RockPrefab: {fileID: 7817550659131983143, guid: ca0e61877fe94634fa2dc53c3ebd4758, type: 3}
