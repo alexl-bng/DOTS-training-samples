@@ -137,6 +137,11 @@ public class WorldGeneratorSystem : SystemBase
 						Value = tryLocation
 					});
 
+					ecb.SetComponent(rockEntity, new Rock
+					{
+						health = sizeX * sizeZ
+					});
+
 					for (int testX = tryLocation.x; testX < tryLocation.x + sizeX; testX++)
 					{
 						for (int testZ = tryLocation.y; testZ < tryLocation.y + sizeZ; testZ++)

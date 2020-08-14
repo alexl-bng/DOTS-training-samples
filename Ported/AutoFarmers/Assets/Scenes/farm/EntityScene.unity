@@ -189,7 +189,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 939753499, guid: d02ce97409e608f4e912874d07f47071, type: 3}
       propertyPath: RockAttempts
-      value: 2000
+      value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 939753499, guid: d02ce97409e608f4e912874d07f47071, type: 3}
       propertyPath: StoreTargetCount
